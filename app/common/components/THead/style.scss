@@ -1,0 +1,69 @@
+.thead {
+  font-size:13px;
+
+  &__row {
+
+  }
+
+  &__cell {
+    border:1px solid #ccc;
+    padding:2px;
+    padding-top:5px;
+    font-size:12px;
+    font-weight:700;
+    text-align:center;
+
+    &_header {
+
+    }
+
+    &_filter {
+
+    }
+  }
+
+  &__label {
+    display:inline-block;
+    vertical-align: top;
+
+    &:after {
+      content:" ";
+      display:inline-block;
+      font-family:"fontAwesome";
+      color:#000;
+      font-size:17px;
+      line-height:10px;
+      margin-left: 2px;;
+      width:10px;
+    }
+
+    &_sortable {
+      cursor:pointer;
+    }
+
+    &_asc {
+      cursor:pointer;
+
+      &:after {
+        content:"\f0de";
+        vertical-align: bottom;
+      }
+    }
+
+    &_desc {
+      cursor:pointer;
+
+      &:after {
+        content:"\f0dd";
+        vertical-align:top;
+      }
+    }
+  }
+
+  &__filter-inp {
+    display:inline-block;
+    width:90%;
+    margin:0 auto;
+
+  }
+}
