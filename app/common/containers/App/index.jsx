@@ -8,9 +8,9 @@ import './style.scss';
 import {companyDataHeaders} from 'Constants/companyDataHeaders';
 import Table from 'Common/components/Table';
 
-import {tableData} from 'Constants/demo';
+// import {tableData} from 'Constants/demo';
 // import {tableData} from 'Constants/demo-mid';
-// import {tableData} from 'Constants/demo-mini';
+import {tableData} from 'Constants/demo-mini';
 
 
 for (let i=0;i < tableData.length;i++) {

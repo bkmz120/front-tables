@@ -1,6 +1,6 @@
 export const tableData = [
 {
- "AP": "3.6",
+ "AP": "10.1",
  "CPV": "0.0005",
  "CR": "0.005885",
  "CTR": "0.03514",
@@ -22,7 +22,29 @@ export const tableData = [
  "Visits": "111212"
 },
 {
- "AP": "3.6",
+ "AP": "100",
+ "CPV": "0.0005",
+ "CR": "0.005885",
+ "CTR": "0.03514",
+ "CV": "0.000207",
+ "Clicks": "3908",
+ "Conversion Cap": "5",
+ "Conversions": "23",
+ "Conversions as Counted for Conversion Cap": "",
+ "Cost": "58.5937",
+ "Country": "Russia",
+ "EPC": "0.0212",
+ "EPV": "0.0007",
+ "Errors": "0",
+ "Lander": "United Kingdom - MOB - (jumper_1)",
+ "Offer": "Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE",
+ "Profit": "24.2063",
+ "ROI": "0.413121",
+ "Revenue": "82.8",
+ "Visits": "111212"
+},
+{
+ "AP": "1.0002",
  "CPV": "0.0005",
  "CR": "0.005885",
  "CTR": "0.03514",

@@ -14,11 +14,17 @@ export default class Table extends Component {
         orderOfClms = {};
 
     for (let i=0;i<headers.length;i++) {
+      headers[i].visible = true;
       filters[headers[i].name] = "";
       orderOfClms[headers[i].name] = null;
     }
 
     orderOfClms[headers[0].name] = "ASC";
+
+    this.clmsTypes = {}
+    for (let i=0;i<this.props.headers.length;i++) {
+      this.clmsTypes[this.props.headers[i].name] = this.props.headers[i].type;
+    }
 
     data = this.sortData(data,headers[0].name,orderOfClms[headers[0].name]);
 
@@ -29,9 +35,12 @@ export default class Table extends Component {
       orderOfClms
     }
 
+
+
     this.changeOrder = this.changeOrder.bind(this);
     this.changeFilter = this.changeFilter.bind(this);
     this.changeOrderOfClm = this.changeOrderOfClm.bind(this);
+    this.hideClm = this.hideClm.bind(this);
   }
 
   changeOrder() {
@@ -80,14 +89,59 @@ export default class Table extends Component {
     });
   }
 
+  filterFloat(value) {
+      if(/^(\-|\+)?([0-9]+(\.[0-9]+)?)$/
+        .test(value))
+        return Number(value);
+    return NaN;
+  }
+
   sortData(data,clmName,order) {
     return data.sort((a,b) => {
+      let val1,val2;
+      if (this.clmsTypes[clmName]==="number") {
+        if (a[clmName]==="") {
+          val1 = 0;
+        }
+        else {
+          val1 = this.filterFloat(a[clmName]);
+        }
+        if (b[clmName]==="") {
+          val2 = 0;
+        }
+        else {
+          val2 = this.filterFloat(b[clmName]);
+        }
+      } else {
+        val1 = a[clmName];
+        val2 = b[clmName];
+      }
+
       if (order==="ASC") {
-        return (a[clmName] < b[clmName]?-1:(a[clmName] > b[clmName] ?1:0));
+        return (val1 < val2?-1:(val1 > val2 ?1:0));
       }
       else {
-        return (a[clmName] < b[clmName]?1:(a[clmName] > b[clmName] ?-1:0));
+        return (val1 < val2?1:(val1 > val2 ?-1:0));
       }
+    });
+  }
+
+  hideClm(clmName) {
+    let headers = [...this.state.headers],
+        filters = {...this.state.filters};
+
+
+    for (let i=0;i<headers.length;i++) {
+      if (headers[i].name===clmName) {
+        headers[i].visible = false;
+        filters[clmName] = "";
+        break;
+      }
+    }
+
+    this.setState({
+      headers,
+      filters
     });
   }
 
@@ -102,9 +156,11 @@ export default class Table extends Component {
             orderOfClms = {this.state.orderOfClms}
             onChangeFilter = {this.changeFilter}
             onOrderOfClmChange = {this.changeOrderOfClm}
+            onClmHide = {this.hideClm}
           />
           <TBody
             headers = {this.state.headers}
+            clmsTypes = {this.clmsTypes}
             filters = {this.state.filters}
             data = {this.state.data}
           />

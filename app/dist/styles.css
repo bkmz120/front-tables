@@ -39,18 +39,23 @@ body {
 .thead {
   font-size: 13px; }
   .thead__cell {
+    position: relative;
     border: 1px solid #ccc;
-    padding: 2px;
-    padding-top: 5px;
+    padding: 5px 2px;
+    padding-bottom: 20px;
     font-size: 12px;
     font-weight: 700;
     text-align: center; }
   .thead__label {
     display: inline-block;
-    vertical-align: top; }
+    vertical-align: top;
+    padding-right: 16px;
+    position: relative; }
     .thead__label:after {
       content: " ";
-      display: inline-block;
+      position: absolute;
+      top: 0;
+      right: 2px;
       font-family: "fontAwesome";
       color: #000;
       font-size: 17px;
@@ -63,12 +68,22 @@ body {
       cursor: pointer; }
       .thead__label_asc:after {
         content: "\F0DE";
-        vertical-align: bottom; }
+        top: 3px; }
     .thead__label_desc {
       cursor: pointer; }
       .thead__label_desc:after {
         content: "\F0DD";
-        vertical-align: top; }
+        top: -3px; }
+  .thead__hideLine {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    width: 100%;
+    text-decoration: center; }
+  .thead__hideBtn {
+    color: blue;
+    cursor: pointer;
+    text-decoration: underline; }
   .thead__filter-inp {
     display: inline-block;
     width: 90%;

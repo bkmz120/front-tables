@@ -12,6 +12,7 @@ export default class TBodyRow extends PureComponent {
     let cells = [];
 
     for (let headerIndex=0;headerIndex < headers.length;headerIndex++) {
+      if (!headers[headerIndex].visible) continue;
       const cell = (
         <TBodyCell
           key={row.id + "." + headers[headerIndex].name}

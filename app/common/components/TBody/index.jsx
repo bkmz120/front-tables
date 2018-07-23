@@ -7,26 +7,16 @@ import "./style.scss";
 
 export default class TBody extends Component {
 
-  constructor(props) {
-    super(props);
-    this.clmsTypes = {}
-
-    for (let i=0;i<this.props.headers.length;i++) {
-      this.clmsTypes[this.props.headers[i].name] = this.props.headers[i].type;
-    }
-
-  }
-
   checkFilters(row) {
     let suitFilters = true;
     for (let clmName in row) {
       let filter = this.props.filters[clmName];
       if (filter!=="") {
-        if (this.clmsTypes[clmName]==="string" && row[clmName].toLowerCase().indexOf(filter)==-1) {
+        if (this.props.clmsTypes[clmName]==="string" && row[clmName].toLowerCase().indexOf(filter)==-1) {
           suitFilters = false;
           break;
         }
-        if (this.clmsTypes[clmName]==="number" && row[clmName].indexOf(filter)!==0) {
+        if (this.props.clmsTypes[clmName]==="number" && row[clmName].indexOf(filter)!==0) {
           suitFilters = false;
           break;
         }
@@ -64,6 +54,7 @@ export default class TBody extends Component {
 
 TBody.propTypes = {
   headers:PropTypes.array.isRequired,
+  clmsTypes:PropTypes.object.isRequired,
   filters: PropTypes.object.isRequired,
   data:PropTypes.array.isRequired,
 }

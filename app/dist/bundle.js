@@ -21044,19 +21044,19 @@ var _Table = __webpack_require__(65);
 
 var _Table2 = _interopRequireDefault(_Table);
 
-var _demo = __webpack_require__(61);
+var _demoMini = __webpack_require__(82);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import {tableData} from 'Constants/demo-mid';
-// import {tableData} from 'Constants/demo-mini';
-
-
-for (var i = 0; i < _demo.tableData.length; i++) {
-  _demo.tableData[i].id = i;
+for (var i = 0; i < _demoMini.tableData.length; i++) {
+  _demoMini.tableData[i].id = i;
 }
 
-console.log("Data count: ", _demo.tableData.length);
+// import {tableData} from 'Constants/demo';
+// import {tableData} from 'Constants/demo-mid';
+
+
+console.log("Data count: ", _demoMini.tableData.length);
 
 var App = exports.App = function App() {
   return _react2.default.createElement(
@@ -21064,7 +21064,7 @@ var App = exports.App = function App() {
     { store: _Store.store },
     _react2.default.createElement(_Table2.default, {
       headers: _companyDataHeaders.companyDataHeaders,
-      data: _demo.tableData
+      data: _demoMini.tableData
     })
   );
 };
@@ -22887,83 +22887,103 @@ Object.defineProperty(exports, "__esModule", {
 var companyDataHeaders = exports.companyDataHeaders = [{
   name: "AP",
   label: "AP",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "CPV",
   label: "CPV",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "CR",
   label: "CR",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "CTR",
   label: "CTR",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "CV",
   label: "CV",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Clicks",
   label: "Clicks",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Conversion Cap",
   label: "Conv.Cap",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Conversions",
   label: "Conv.",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Conversions as Counted for Conversion Cap",
   label: "Conv. as Counted",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Cost",
   label: "Cost",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Country",
   label: "Country",
-  type: "string"
+  type: "string",
+  required: false
 }, {
   name: "EPC",
   label: "EPC",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "EPV",
   label: "EPV",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Errors",
   label: "Errors",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Lander",
   label: "Lander",
-  type: "string"
+  type: "string",
+  required: false
 }, {
   name: "Offer",
   label: "Offer",
-  type: "string"
+  type: "string",
+  required: false
 }, {
   name: "Profit",
   label: "Profit",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "ROI",
   label: "ROI",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Revenue",
   label: "Revenue",
-  type: "number"
+  type: "number",
+  required: false
 }, {
   name: "Visits",
   label: "Visits",
-  type: "number"
+  type: "number",
+  required: false
 }];
 
 /***/ }),
@@ -23023,11 +23043,17 @@ var Table = function (_Component) {
         orderOfClms = {};
 
     for (var i = 0; i < headers.length; i++) {
+      headers[i].visible = true;
       filters[headers[i].name] = "";
       orderOfClms[headers[i].name] = null;
     }
 
     orderOfClms[headers[0].name] = "ASC";
+
+    _this.clmsTypes = {};
+    for (var _i = 0; _i < _this.props.headers.length; _i++) {
+      _this.clmsTypes[_this.props.headers[_i].name] = _this.props.headers[_i].type;
+    }
 
     data = _this.sortData(data, headers[0].name, orderOfClms[headers[0].name]);
 
@@ -23041,6 +23067,7 @@ var Table = function (_Component) {
     _this.changeOrder = _this.changeOrder.bind(_this);
     _this.changeFilter = _this.changeFilter.bind(_this);
     _this.changeOrderOfClm = _this.changeOrderOfClm.bind(_this);
+    _this.hideClm = _this.hideClm.bind(_this);
     return _this;
   }
 
@@ -23093,14 +23120,59 @@ var Table = function (_Component) {
       });
     }
   }, {
+    key: 'filterFloat',
+    value: function filterFloat(value) {
+      if (/^(\-|\+)?([0-9]+(\.[0-9]+)?)$/.test(value)) return Number(value);
+      return NaN;
+    }
+  }, {
     key: 'sortData',
     value: function sortData(data, clmName, order) {
+      var _this2 = this;
+
       return data.sort(function (a, b) {
-        if (order === "ASC") {
-          return a[clmName] < b[clmName] ? -1 : a[clmName] > b[clmName] ? 1 : 0;
+        var val1 = void 0,
+            val2 = void 0;
+        if (_this2.clmsTypes[clmName] === "number") {
+          if (a[clmName] === "") {
+            val1 = 0;
+          } else {
+            val1 = _this2.filterFloat(a[clmName]);
+          }
+          if (b[clmName] === "") {
+            val2 = 0;
+          } else {
+            val2 = _this2.filterFloat(b[clmName]);
+          }
         } else {
-          return a[clmName] < b[clmName] ? 1 : a[clmName] > b[clmName] ? -1 : 0;
+          val1 = a[clmName];
+          val2 = b[clmName];
         }
+
+        if (order === "ASC") {
+          return val1 < val2 ? -1 : val1 > val2 ? 1 : 0;
+        } else {
+          return val1 < val2 ? 1 : val1 > val2 ? -1 : 0;
+        }
+      });
+    }
+  }, {
+    key: 'hideClm',
+    value: function hideClm(clmName) {
+      var headers = [].concat(_toConsumableArray(this.state.headers)),
+          filters = _extends({}, this.state.filters);
+
+      for (var i = 0; i < headers.length; i++) {
+        if (headers[i].name === clmName) {
+          headers[i].visible = false;
+          filters[clmName] = "";
+          break;
+        }
+      }
+
+      this.setState({
+        headers: headers,
+        filters: filters
       });
     }
   }, {
@@ -23118,10 +23190,12 @@ var Table = function (_Component) {
             filters: this.state.filters,
             orderOfClms: this.state.orderOfClms,
             onChangeFilter: this.changeFilter,
-            onOrderOfClmChange: this.changeOrderOfClm
+            onOrderOfClmChange: this.changeOrderOfClm,
+            onClmHide: this.hideClm
           }),
           _react2.default.createElement(_TBody2.default, {
             headers: this.state.headers,
+            clmsTypes: this.clmsTypes,
             filters: this.state.filters,
             data: this.state.data
           })
@@ -23185,22 +23259,28 @@ var THead = function (_Component) {
 
     var _this = _possibleConstructorReturn(this, (THead.__proto__ || Object.getPrototypeOf(THead)).call(this, props));
 
-    _this.changeFilter = _this.changeFilter.bind(_this);
-    _this.changeOrderOfClm = _this.changeOrderOfClm.bind(_this);
+    _this.changeFilter = function (clmName) {
+      return function (e) {
+        _this.props.onChangeFilter(clmName, e.target.value);
+      };
+    };
+
+    _this.changeOrderOfClm = function (clmName) {
+      return function (e) {
+        _this.props.onOrderOfClmChange(clmName);
+      };
+    };
+
+    _this.hideClm = function (clmName) {
+      return function (e) {
+        _this.props.onClmHide(clmName);
+      };
+    };
+
     return _this;
   }
 
   _createClass(THead, [{
-    key: 'changeFilter',
-    value: function changeFilter(e) {
-      this.props.onChangeFilter(e.target.name, e.target.value);
-    }
-  }, {
-    key: 'changeOrderOfClm',
-    value: function changeOrderOfClm(e) {
-      this.props.onOrderOfClmChange(e.target.getAttribute("name"));
-    }
-  }, {
     key: 'render',
     value: function render() {
       console.log('render THead');
@@ -23212,6 +23292,8 @@ var THead = function (_Component) {
           filterCells = [];
 
       for (var i = 0; i < headers.length; i++) {
+        if (!headers[i].visible) continue;
+
         var orderClass = "";
         if (this.props.orderOfClms !== undefined) {
           if (this.props.orderOfClms[headers[i].name] === "ASC") {
@@ -23223,6 +23305,22 @@ var THead = function (_Component) {
           }
         }
 
+        var hideBtn = void 0;
+        if (!headers[i].required) {
+          hideBtn = _react2.default.createElement(
+            'div',
+            { className: 'thead__hideLine' },
+            _react2.default.createElement(
+              'span',
+              {
+                className: 'thead__hideBtn',
+                onClick: this.hideClm(headers[i].name)
+              },
+              'hide'
+            )
+          );
+        }
+
         var headerCell = _react2.default.createElement(
           'td',
           {
@@ -23232,12 +23330,12 @@ var THead = function (_Component) {
           _react2.default.createElement(
             'span',
             {
-              className: "thead__label" + orderClass,
-              name: headers[i].name,
-              onClick: this.changeOrderOfClm
+              className: 'thead__label ' + orderClass,
+              onClick: this.changeOrderOfClm(headers[i].name)
             },
             headers[i].label
-          )
+          ),
+          hideBtn
         );
 
         var filterCell = _react2.default.createElement(
@@ -23249,9 +23347,8 @@ var THead = function (_Component) {
           _react2.default.createElement('input', {
             type: 'text',
             className: 'thead__filter-inp',
-            name: headers[i].name,
             value: filters[headers[i].name],
-            onChange: this.changeFilter
+            onChange: this.changeFilter(headers[i].name)
           })
         );
 
@@ -23289,7 +23386,7 @@ THead.propTypes = {
   onChangeFilter: _propTypes2.default.func,
   onOrderOfClmChange: _propTypes2.default.func,
   onClmMove: _propTypes2.default.func,
-  onClmVisibleToggl: _propTypes2.default.func
+  onClmHide: _propTypes2.default.func
 };
 
 /***/ }),
@@ -23336,18 +23433,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var TBody = function (_Component) {
   _inherits(TBody, _Component);
 
-  function TBody(props) {
+  function TBody() {
     _classCallCheck(this, TBody);
 
-    var _this = _possibleConstructorReturn(this, (TBody.__proto__ || Object.getPrototypeOf(TBody)).call(this, props));
-
-    _this.clmsTypes = {};
-
-    for (var i = 0; i < _this.props.headers.length; i++) {
-      _this.clmsTypes[_this.props.headers[i].name] = _this.props.headers[i].type;
-    }
-
-    return _this;
+    return _possibleConstructorReturn(this, (TBody.__proto__ || Object.getPrototypeOf(TBody)).apply(this, arguments));
   }
 
   _createClass(TBody, [{
@@ -23357,11 +23446,11 @@ var TBody = function (_Component) {
       for (var clmName in row) {
         var filter = this.props.filters[clmName];
         if (filter !== "") {
-          if (this.clmsTypes[clmName] === "string" && row[clmName].toLowerCase().indexOf(filter) == -1) {
+          if (this.props.clmsTypes[clmName] === "string" && row[clmName].toLowerCase().indexOf(filter) == -1) {
             suitFilters = false;
             break;
           }
-          if (this.clmsTypes[clmName] === "number" && row[clmName].indexOf(filter) !== 0) {
+          if (this.props.clmsTypes[clmName] === "number" && row[clmName].indexOf(filter) !== 0) {
             suitFilters = false;
             break;
           }
@@ -23407,6 +23496,7 @@ exports.default = TBody;
 
 TBody.propTypes = {
   headers: _propTypes2.default.array.isRequired,
+  clmsTypes: _propTypes2.default.object.isRequired,
   filters: _propTypes2.default.object.isRequired,
   data: _propTypes2.default.array.isRequired
 };
@@ -23465,6 +23555,7 @@ var TBodyRow = function (_PureComponent) {
       var cells = [];
 
       for (var headerIndex = 0; headerIndex < headers.length; headerIndex++) {
+        if (!headers[headerIndex].visible) continue;
         var cell = _react2.default.createElement(_TBodyCell2.default, {
           key: row.id + "." + headers[headerIndex].name,
           type: headers[headerIndex].type,
@@ -23593,6 +23684,90 @@ TBodyCell.propTypes = {
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 73 */,
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var tableData = exports.tableData = [{
+  "AP": "10.1",
+  "CPV": "0.0005",
+  "CR": "0.005885",
+  "CTR": "0.03514",
+  "CV": "0.000207",
+  "Clicks": "3908",
+  "Conversion Cap": "",
+  "Conversions": "23",
+  "Conversions as Counted for Conversion Cap": "",
+  "Cost": "58.5937",
+  "Country": "United Kingdom",
+  "EPC": "0.0212",
+  "EPV": "0.0007",
+  "Errors": "0",
+  "Lander": "United Kingdom - MOB - (jumper_1)",
+  "Offer": "Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE",
+  "Profit": "24.2063",
+  "ROI": "0.413121",
+  "Revenue": "82.8",
+  "Visits": "111212"
+}, {
+  "AP": "100",
+  "CPV": "0.0005",
+  "CR": "0.005885",
+  "CTR": "0.03514",
+  "CV": "0.000207",
+  "Clicks": "3908",
+  "Conversion Cap": "5",
+  "Conversions": "23",
+  "Conversions as Counted for Conversion Cap": "",
+  "Cost": "58.5937",
+  "Country": "Russia",
+  "EPC": "0.0212",
+  "EPV": "0.0007",
+  "Errors": "0",
+  "Lander": "United Kingdom - MOB - (jumper_1)",
+  "Offer": "Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE",
+  "Profit": "24.2063",
+  "ROI": "0.413121",
+  "Revenue": "82.8",
+  "Visits": "111212"
+}, {
+  "AP": "1.0002",
+  "CPV": "0.0005",
+  "CR": "0.005885",
+  "CTR": "0.03514",
+  "CV": "0.000207",
+  "Clicks": "3908",
+  "Conversion Cap": "",
+  "Conversions": "23",
+  "Conversions as Counted for Conversion Cap": "",
+  "Cost": "58.5937",
+  "Country": "Russia",
+  "EPC": "0.0212",
+  "EPV": "0.0007",
+  "Errors": "0",
+  "Lander": "United Kingdom - MOB - (jumper_1)",
+  "Offer": "Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE",
+  "Profit": "24.2063",
+  "ROI": "0.413121",
+  "Revenue": "82.8",
+  "Visits": "111212"
+}];
 
 /***/ })
 /******/ ]);

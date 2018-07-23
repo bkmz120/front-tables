@@ -6,16 +6,19 @@ import "./style.scss";
 export default class THead extends Component {
   constructor(props) {
     super(props);
-    this.changeFilter = this.changeFilter.bind(this);
-    this.changeOrderOfClm = this.changeOrderOfClm.bind(this);
+
   }
 
-  changeFilter(e) {
-    this.props.onChangeFilter(e.target.name,e.target.value);
+  changeFilter = (clmName) => e => {
+    this.props.onChangeFilter(clmName,e.target.value);
   }
 
-  changeOrderOfClm(e) {
-    this.props.onOrderOfClmChange(e.target.getAttribute("name"));
+  changeOrderOfClm = (clmName) => e => {
+    this.props.onOrderOfClmChange(clmName);
+  }
+
+  hideClm = (clmName) => e => {
+    this.props.onClmHide(clmName);
   }
 
   render() {
@@ -25,6 +28,8 @@ export default class THead extends Component {
         filterCells = [];
 
     for (let i=0;i<headers.length;i++) {
+      if (!headers[i].visible) continue;
+
       let orderClass = "";
       if (this.props.orderOfClms!==undefined) {
         if (this.props.orderOfClms[headers[i].name]==="ASC") {
@@ -36,18 +41,33 @@ export default class THead extends Component {
         }
       }
 
+      let hideBtn;
+      if (!headers[i].required) {
+        hideBtn = (
+          <div className="thead__hideLine">
+            <span
+              className="thead__hideBtn"
+              onClick={this.hideClm(headers[i].name)}
+            >
+              hide
+            </span>
+          </div>
+        );
+      }
+
       const headerCell = (
         <td
           className = "thead__cell thead__cell_header"
           key={headers[i].name}
         >
           <span
-            className={"thead__label" + orderClass}
-            name={headers[i].name}
-            onClick={this.changeOrderOfClm}
+            className={`thead__label ${orderClass}`}
+            onClick={this.changeOrderOfClm(headers[i].name)}
           >
             {headers[i].label}
           </span>
+
+          {hideBtn}
         </td>
       );
 
@@ -59,9 +79,8 @@ export default class THead extends Component {
           <input
             type="text"
             className="thead__filter-inp"
-            name={headers[i].name}
             value={filters[headers[i].name]}
-            onChange={this.changeFilter}
+            onChange={this.changeFilter(headers[i].name)}
           />
         </td>
       );
@@ -90,5 +109,5 @@ THead.propTypes = {
   onChangeFilter: PropTypes.func,
   onOrderOfClmChange: PropTypes.func,
   onClmMove: PropTypes.func,
-  onClmVisibleToggl: PropTypes.func,
+  onClmHide: PropTypes.func,
 }
