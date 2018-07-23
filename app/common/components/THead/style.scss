@@ -1,5 +1,12 @@
 .thead {
   font-size:13px;
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
 
   &__row {
 
@@ -8,7 +15,7 @@
   &__cell {
     position:relative;
     border:1px solid #ccc;
-    padding:5px 2px;
+    padding:20px 2px;
     padding-bottom:20px;
     font-size:12px;
     font-weight:700;
@@ -21,6 +28,40 @@
     &_filter {
 
     }
+
+    &_dropHere {
+
+
+    }
+
+  }
+
+  &__dropLabel {
+    position:absolute;
+    top: -24px;
+    right: -11px;
+    display:none;
+
+    .thead__cell_dropHere &{
+      display:block;
+    }
+
+    &:after {
+      content:"\f0a7";
+      font-family:fontAwesome;
+      color:#333;
+      font-size:20px;
+    }
+  }
+
+  &__cellHandle {
+    position:absolute;
+    top:2px;
+    right:2px;
+    left:2px;
+    height:9px;
+    background-color:#fafafa;
+    cursor:move;
   }
 
   &__label {

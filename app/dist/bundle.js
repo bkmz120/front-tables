@@ -23017,6 +23017,10 @@ var _TBody = __webpack_require__(68);
 
 var _TBody2 = _interopRequireDefault(_TBody);
 
+var _THiddenClms = __webpack_require__(83);
+
+var _THiddenClms2 = _interopRequireDefault(_THiddenClms);
+
 __webpack_require__(72);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -23064,28 +23068,15 @@ var Table = function (_Component) {
       orderOfClms: orderOfClms
     };
 
-    _this.changeOrder = _this.changeOrder.bind(_this);
     _this.changeFilter = _this.changeFilter.bind(_this);
     _this.changeOrderOfClm = _this.changeOrderOfClm.bind(_this);
     _this.hideClm = _this.hideClm.bind(_this);
+    _this.showClm = _this.showClm.bind(_this);
+    _this.moveClm = _this.moveClm.bind(_this);
     return _this;
   }
 
   _createClass(Table, [{
-    key: 'changeOrder',
-    value: function changeOrder() {
-      var firstIndex = 0;
-      var secondIndex = 1;
-      var results = this.state.headers.slice();
-      var firstItem = this.state.headers[firstIndex];
-      results[firstIndex] = this.state.headers[secondIndex];
-      results[secondIndex] = firstItem;
-
-      this.setState({
-        headers: results
-      });
-    }
-  }, {
     key: 'changeFilter',
     value: function changeFilter(name, value) {
       var filters = _extends({}, this.state.filters);
@@ -23176,34 +23167,84 @@ var Table = function (_Component) {
       });
     }
   }, {
+    key: 'showClm',
+    value: function showClm(clmName) {
+      var headers = [].concat(_toConsumableArray(this.state.headers));
+
+      for (var i = 0; i < headers.length; i++) {
+        if (headers[i].name === clmName) {
+          headers[i].visible = true;
+          break;
+        }
+      }
+
+      this.setState({
+        headers: headers
+      });
+    }
+  }, {
+    key: 'moveClm',
+    value: function moveClm(dragClmName, dropClmName) {
+      var lastIndex = 0,
+          newIndex = 0;
+
+      for (var i = 0; i < this.state.headers.length; i++) {
+        if (this.state.headers[i].name === dragClmName) {
+          lastIndex = i;
+        }
+        if (this.state.headers[i].name === dropClmName) {
+          newIndex = i;
+        }
+      }
+
+      var headers = [];
+
+      for (var _i2 = 0; _i2 < this.state.headers.length; _i2++) {
+        if (_i2 != lastIndex) {
+          headers.push(_extends({}, this.state.headers[_i2]));
+          if (_i2 == newIndex) {
+            headers.push(_extends({}, this.state.headers[lastIndex]));
+          }
+        }
+      }
+
+      this.setState({
+        headers: headers
+      });
+    }
+  }, {
     key: 'render',
     value: function render() {
       console.log('render Table');
       return _react2.default.createElement(
         'div',
         null,
+        _react2.default.createElement(_THiddenClms2.default, {
+          headers: this.state.headers,
+          onClmShow: this.showClm
+        }),
         _react2.default.createElement(
-          'table',
-          { className: 'table' },
-          _react2.default.createElement(_THead2.default, {
-            headers: this.state.headers,
-            filters: this.state.filters,
-            orderOfClms: this.state.orderOfClms,
-            onChangeFilter: this.changeFilter,
-            onOrderOfClmChange: this.changeOrderOfClm,
-            onClmHide: this.hideClm
-          }),
-          _react2.default.createElement(_TBody2.default, {
-            headers: this.state.headers,
-            clmsTypes: this.clmsTypes,
-            filters: this.state.filters,
-            data: this.state.data
-          })
-        ),
-        _react2.default.createElement(
-          'button',
-          { onClick: this.changeOrder },
-          ' new order '
+          'div',
+          { className: 'table-drag-zone' },
+          _react2.default.createElement(
+            'table',
+            { className: 'table' },
+            _react2.default.createElement(_THead2.default, {
+              headers: this.state.headers,
+              filters: this.state.filters,
+              orderOfClms: this.state.orderOfClms,
+              onChangeFilter: this.changeFilter,
+              onOrderOfClmChange: this.changeOrderOfClm,
+              onClmHide: this.hideClm,
+              onClmMove: this.moveClm
+            }),
+            _react2.default.createElement(_TBody2.default, {
+              headers: this.state.headers,
+              clmsTypes: this.clmsTypes,
+              filters: this.state.filters,
+              data: this.state.data
+            })
+          )
         )
       );
     }
@@ -23251,8 +23292,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var THead = function (_Component) {
-  _inherits(THead, _Component);
+var THead = function (_PureComponent) {
+  _inherits(THead, _PureComponent);
 
   function THead(props) {
     _classCallCheck(this, THead);
@@ -23277,10 +23318,80 @@ var THead = function (_Component) {
       };
     };
 
+    _this.state = {
+      dropClmName: null,
+      dragClmName: null
+    };
+
+    _this.dragObject = {};
+
+    _this.onMouseDown = _this.onMouseDown.bind(_this);
+    _this.onMouseMove = _this.onMouseMove.bind(_this);
+    _this.onMouseUp = _this.onMouseUp.bind(_this);
+
+    document.onmouseup = _this.onMouseUp;
     return _this;
   }
 
   _createClass(THead, [{
+    key: 'onMouseDown',
+    value: function onMouseDown(e) {
+      if (e.button !== 0) {
+        return;
+      }
+
+      var elem = e.target.closest('.handler');
+      if (!elem) return;
+      var cell = elem.closest('.thead__cell');
+      this.setState({
+        dragClmName: cell.getAttribute("name")
+      });
+
+      this.dragObject.on = true;
+      this.dragObject.downX = e.pageX;
+      this.dragObject.downY = e.pageY;
+    }
+  }, {
+    key: 'onMouseMove',
+    value: function onMouseMove(e) {
+      if (!this.dragObject.on) return;
+
+      var moveX = e.pageX - this.dragObject.downX;
+      var moveY = e.pageY - this.dragObject.downY;
+      if (Math.abs(moveX) < 3 && Math.abs(moveY) < 3) {
+        return;
+      }
+
+      var elem = document.elementFromPoint(e.clientX, e.clientY);
+      var cell = elem.closest('.thead__cell');
+      var dropClmName = cell.getAttribute("name");
+      if (dropClmName !== this.state.dragClmName) {
+        this.setState({
+          dropClmName: dropClmName
+        });
+      } else {
+        this.setState({
+          dropClmName: null
+        });
+      }
+
+      return false;
+    }
+  }, {
+    key: 'onMouseUp',
+    value: function onMouseUp(e) {
+      if (this.dragObject.on) {
+        if (this.state.dragClmName !== this.state.dropClmName && this.state.dragClmName !== null) {
+          this.props.onClmMove(this.state.dragClmName, this.state.dropClmName);
+        }
+
+        this.setState({
+          dropClmName: null
+        });
+        this.dragObject = {};
+      }
+    }
+  }, {
     key: 'render',
     value: function render() {
       console.log('render THead');
@@ -23321,10 +23432,16 @@ var THead = function (_Component) {
           );
         }
 
+        var dropHereClass = "";
+        if (this.state.dropClmName === headers[i].name) {
+          dropHereClass = "thead__cell_dropHere";
+        }
+
         var headerCell = _react2.default.createElement(
           'td',
           {
-            className: 'thead__cell thead__cell_header',
+            className: 'thead__cell thead__cell_header ' + dropHereClass,
+            name: headers[i].name,
             key: headers[i].name
           },
           _react2.default.createElement(
@@ -23335,7 +23452,9 @@ var THead = function (_Component) {
             },
             headers[i].label
           ),
-          hideBtn
+          hideBtn,
+          _react2.default.createElement('div', { className: 'thead__cellHandle handler' }),
+          _react2.default.createElement('div', { className: 'thead__dropLabel' })
         );
 
         var filterCell = _react2.default.createElement(
@@ -23358,7 +23477,11 @@ var THead = function (_Component) {
 
       return _react2.default.createElement(
         'thead',
-        { className: 'thead' },
+        {
+          className: 'thead',
+          onMouseDown: this.onMouseDown,
+          onMouseMove: this.onMouseMove
+        },
         _react2.default.createElement(
           'tr',
           { className: 'thead__row' },
@@ -23374,7 +23497,7 @@ var THead = function (_Component) {
   }]);
 
   return THead;
-}(_react.Component);
+}(_react.PureComponent);
 
 exports.default = THead;
 
@@ -23768,6 +23891,127 @@ var tableData = exports.tableData = [{
   "Revenue": "82.8",
   "Visits": "111212"
 }];
+
+/***/ }),
+/* 83 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(0);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(1);
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+__webpack_require__(84);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var THiddenClms = function (_PureComponent) {
+  _inherits(THiddenClms, _PureComponent);
+
+  function THiddenClms() {
+    var _ref;
+
+    var _temp, _this, _ret;
+
+    _classCallCheck(this, THiddenClms);
+
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = THiddenClms.__proto__ || Object.getPrototypeOf(THiddenClms)).call.apply(_ref, [this].concat(args))), _this), _this.clmShow = function (clmName) {
+      return function (e) {
+        _this.props.onClmShow(clmName);
+      };
+    }, _temp), _possibleConstructorReturn(_this, _ret);
+  }
+
+  _createClass(THiddenClms, [{
+    key: 'render',
+    value: function render() {
+      var headers = this.props.headers;
+
+
+      var hiddenClms = [];
+
+      for (var i = 0; i < headers.length; i++) {
+        if (!headers[i].visible) {
+          var item = _react2.default.createElement(
+            'div',
+            { className: 'tHiddenClms__item', key: headers[i].name },
+            headers[i].label,
+            _react2.default.createElement('i', {
+              className: 'fa fa-eye tHiddenClms__show',
+              onClick: this.clmShow(headers[i].name)
+            })
+          );
+
+          hiddenClms.push(item);
+        }
+      }
+
+      var visibleClass = "";
+      if (hiddenClms.length > 0) {
+        visibleClass = "tHiddenClms_visible";
+      } else {
+        hiddenClms = _react2.default.createElement(
+          'div',
+          { className: 'tHiddenClms__allVisible' },
+          '(All columns is visible)'
+        );
+      }
+
+      return _react2.default.createElement(
+        'div',
+        { className: 'tHiddenClms ' + visibleClass },
+        _react2.default.createElement(
+          'div',
+          { className: 'tHiddenClms__text' },
+          'Hidden columns:'
+        ),
+        _react2.default.createElement(
+          'div',
+          { className: 'tHiddenClms__items' },
+          hiddenClms
+        )
+      );
+    }
+  }]);
+
+  return THiddenClms;
+}(_react.PureComponent);
+
+exports.default = THiddenClms;
+
+
+THiddenClms.propTypes = {
+  headers: _propTypes2.default.array.isRequired,
+  onClmShow: _propTypes2.default.func.isRequired
+};
+
+/***/ }),
+/* 84 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ })
 /******/ ]);

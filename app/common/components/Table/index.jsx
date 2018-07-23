@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 import THead from 'Common/components/THead';
 import TBody from 'Common/components/TBody';
+import THiddenClms from 'Common/components/THiddenClms';
 import "./style.scss";
 
 export default class Table extends Component {
@@ -37,24 +38,13 @@ export default class Table extends Component {
 
 
 
-    this.changeOrder = this.changeOrder.bind(this);
     this.changeFilter = this.changeFilter.bind(this);
     this.changeOrderOfClm = this.changeOrderOfClm.bind(this);
     this.hideClm = this.hideClm.bind(this);
+    this.showClm = this.showClm.bind(this);
+    this.moveClm = this.moveClm.bind(this);
   }
 
-  changeOrder() {
-    const firstIndex = 0;
-    const secondIndex = 1;
-    const results= this.state.headers.slice();
-    const firstItem = this.state.headers[firstIndex];
-    results[firstIndex] = this.state.headers[secondIndex];
-    results[secondIndex] = firstItem;
-
-    this.setState({
-      headers:results
-    })
-  }
 
   changeFilter(name,value) {
     let filters = {...this.state.filters}
@@ -145,27 +135,80 @@ export default class Table extends Component {
     });
   }
 
+  showClm(clmName) {
+    let headers = [...this.state.headers];
+
+    for (let i=0;i< headers.length;i++) {
+      if (headers[i].name===clmName) {
+        headers[i].visible = true;
+        break;
+      }
+    }
+
+    this.setState({
+      headers
+    });
+  }
+
+  moveClm(dragClmName,dropClmName) {
+    let lastIndex=0,
+        newIndex=0;
+
+
+
+    for (let i=0;i < this.state.headers.length;i++) {
+      if (this.state.headers[i].name===dragClmName) {
+        lastIndex = i;
+      }
+      if (this.state.headers[i].name===dropClmName) {
+        newIndex = i;
+      }
+    }
+
+    let headers = [];
+
+    for (let i=0;i < this.state.headers.length;i++) {
+      if (i!=lastIndex) {
+        headers.push({...this.state.headers[i]});
+        if (i==newIndex) {
+          headers.push({...this.state.headers[lastIndex]})
+        }
+      }
+    }
+
+    this.setState({
+      headers
+    });
+
+  }
+
   render() {
     console.log('render Table');
     return (
       <div>
-        <table className="table">
-          <THead
-            headers = {this.state.headers}
-            filters = {this.state.filters}
-            orderOfClms = {this.state.orderOfClms}
-            onChangeFilter = {this.changeFilter}
-            onOrderOfClmChange = {this.changeOrderOfClm}
-            onClmHide = {this.hideClm}
-          />
-          <TBody
-            headers = {this.state.headers}
-            clmsTypes = {this.clmsTypes}
-            filters = {this.state.filters}
-            data = {this.state.data}
-          />
-        </table>
-        <button onClick={this.changeOrder}> new order </button>
+        <THiddenClms
+          headers = {this.state.headers}
+          onClmShow= {this.showClm}
+        />
+        <div className="table-drag-zone">
+          <table className="table">
+            <THead
+              headers = {this.state.headers}
+              filters = {this.state.filters}
+              orderOfClms = {this.state.orderOfClms}
+              onChangeFilter = {this.changeFilter}
+              onOrderOfClmChange = {this.changeOrderOfClm}
+              onClmHide = {this.hideClm}
+              onClmMove = {this.moveClm}
+            />
+            <TBody
+              headers = {this.state.headers}
+              clmsTypes = {this.clmsTypes}
+              filters = {this.state.filters}
+              data = {this.state.data}
+            />
+          </table>
+        </div>
       </div>
     )
   }

@@ -37,15 +37,48 @@ table {
 body {
   font-family: 'Open Sans'; }
 .thead {
-  font-size: 13px; }
+  font-size: 13px;
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */ }
   .thead__cell {
     position: relative;
     border: 1px solid #ccc;
-    padding: 5px 2px;
+    padding: 20px 2px;
     padding-bottom: 20px;
     font-size: 12px;
     font-weight: 700;
     text-align: center; }
+  .thead__dropLabel {
+    position: absolute;
+    top: -24px;
+    right: -11px;
+    display: none; }
+    .thead__cell_dropHere .thead__dropLabel {
+      display: block; }
+    .thead__dropLabel:after {
+      content: "\F0A7";
+      font-family: fontAwesome;
+      color: #333;
+      font-size: 20px; }
+  .thead__cellHandle {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    left: 2px;
+    height: 9px;
+    background-color: #fafafa;
+    cursor: move; }
   .thead__label {
     display: inline-block;
     vertical-align: top;
@@ -93,5 +126,32 @@ body {
   .tbody__cell {
     border: 1px solid #ccc;
     padding: 10px 2px; }
+.tHiddenClms {
+  display: flex;
+  padding: 20px;
+  min-height: 76px;
+  box-sizing: border-box;
+  opacity: 0.2; }
+  .tHiddenClms_visible {
+    opacity: 1; }
+  .tHiddenClms__text {
+    font-size: 16px;
+    padding-right: 20px; }
+  .tHiddenClms__item {
+    display: inline-block;
+    vertical-align: top;
+    padding: 5px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    font-size: 14px; }
+  .tHiddenClms__show {
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 5px;
+    cursor: pointer; }
 .table {
   border-collapse: collapse; }
+
+.table-drag-zone {
+  position: relative; }
