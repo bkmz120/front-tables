@@ -24,7 +24,7 @@ export default class TBodyCell extends PureComponent {
       <td
         className = "tbody__cell"
       >
-        {this.truncateCell(type,value)}
+        {value}
       </td>
     )
   }

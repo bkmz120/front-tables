@@ -6,7 +6,6 @@ import TBodyCell from 'Common/components/TBodyCell';
 export default class TBodyRow extends PureComponent {
 
   render() {
-    // console.log("Row render");
     const {row,headers} = this.props;
 
     let cells = [];
@@ -22,12 +21,6 @@ export default class TBodyRow extends PureComponent {
       );
       cells.push(cell);
     }
-
-    // let style = {}
-    // if (!this.props.visible) {
-    //   // style.display = "none";
-    //   style.visibility = "hidden";
-    // }
 
     return (
       <tr>

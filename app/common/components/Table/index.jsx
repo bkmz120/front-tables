@@ -183,32 +183,30 @@ export default class Table extends Component {
   }
 
   render() {
-    console.log('render Table');
     return (
       <div>
         <THiddenClms
           headers = {this.state.headers}
           onClmShow= {this.showClm}
         />
-        <div className="table-drag-zone">
-          <table className="table">
-            <THead
-              headers = {this.state.headers}
-              filters = {this.state.filters}
-              orderOfClms = {this.state.orderOfClms}
-              onChangeFilter = {this.changeFilter}
-              onOrderOfClmChange = {this.changeOrderOfClm}
-              onClmHide = {this.hideClm}
-              onClmMove = {this.moveClm}
-            />
-            <TBody
-              headers = {this.state.headers}
-              clmsTypes = {this.clmsTypes}
-              filters = {this.state.filters}
-              data = {this.state.data}
-            />
-          </table>
-        </div>
+        <table className="table">
+          <THead
+            headers = {this.state.headers}
+            filters = {this.state.filters}
+            orderOfClms = {this.state.orderOfClms}
+            onChangeFilter = {this.changeFilter}
+            onOrderOfClmChange = {this.changeOrderOfClm}
+            onClmHide = {this.hideClm}
+            onClmMove = {this.moveClm}
+          />
+          <TBody
+            headers = {this.state.headers}
+            clmsTypes = {this.clmsTypes}
+            filters = {this.state.filters}
+            data = {this.state.data}
+          />
+        </table>
+
       </div>
     )
   }

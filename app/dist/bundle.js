@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 17);
+/******/ 	return __webpack_require__(__webpack_require__.s = 24);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -73,12 +73,322 @@
 if (false) {
   module.exports = require('./cjs/react.production.min.js');
 } else {
-  module.exports = __webpack_require__(18);
+  module.exports = __webpack_require__(25);
 }
 
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var bind = __webpack_require__(19);
+var isBuffer = __webpack_require__(72);
+
+/*global toString:true*/
+
+// utils is a library of generic helper functions non-specific to axios
+
+var toString = Object.prototype.toString;
+
+/**
+ * Determine if a value is an Array
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Array, otherwise false
+ */
+function isArray(val) {
+  return toString.call(val) === '[object Array]';
+}
+
+/**
+ * Determine if a value is an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an ArrayBuffer, otherwise false
+ */
+function isArrayBuffer(val) {
+  return toString.call(val) === '[object ArrayBuffer]';
+}
+
+/**
+ * Determine if a value is a FormData
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an FormData, otherwise false
+ */
+function isFormData(val) {
+  return (typeof FormData !== 'undefined') && (val instanceof FormData);
+}
+
+/**
+ * Determine if a value is a view on an ArrayBuffer
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
+ */
+function isArrayBufferView(val) {
+  var result;
+  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
+    result = ArrayBuffer.isView(val);
+  } else {
+    result = (val) && (val.buffer) && (val.buffer instanceof ArrayBuffer);
+  }
+  return result;
+}
+
+/**
+ * Determine if a value is a String
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a String, otherwise false
+ */
+function isString(val) {
+  return typeof val === 'string';
+}
+
+/**
+ * Determine if a value is a Number
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Number, otherwise false
+ */
+function isNumber(val) {
+  return typeof val === 'number';
+}
+
+/**
+ * Determine if a value is undefined
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if the value is undefined, otherwise false
+ */
+function isUndefined(val) {
+  return typeof val === 'undefined';
+}
+
+/**
+ * Determine if a value is an Object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is an Object, otherwise false
+ */
+function isObject(val) {
+  return val !== null && typeof val === 'object';
+}
+
+/**
+ * Determine if a value is a Date
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Date, otherwise false
+ */
+function isDate(val) {
+  return toString.call(val) === '[object Date]';
+}
+
+/**
+ * Determine if a value is a File
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a File, otherwise false
+ */
+function isFile(val) {
+  return toString.call(val) === '[object File]';
+}
+
+/**
+ * Determine if a value is a Blob
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Blob, otherwise false
+ */
+function isBlob(val) {
+  return toString.call(val) === '[object Blob]';
+}
+
+/**
+ * Determine if a value is a Function
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Function, otherwise false
+ */
+function isFunction(val) {
+  return toString.call(val) === '[object Function]';
+}
+
+/**
+ * Determine if a value is a Stream
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a Stream, otherwise false
+ */
+function isStream(val) {
+  return isObject(val) && isFunction(val.pipe);
+}
+
+/**
+ * Determine if a value is a URLSearchParams object
+ *
+ * @param {Object} val The value to test
+ * @returns {boolean} True if value is a URLSearchParams object, otherwise false
+ */
+function isURLSearchParams(val) {
+  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams;
+}
+
+/**
+ * Trim excess whitespace off the beginning and end of a string
+ *
+ * @param {String} str The String to trim
+ * @returns {String} The String freed of excess whitespace
+ */
+function trim(str) {
+  return str.replace(/^\s*/, '').replace(/\s*$/, '');
+}
+
+/**
+ * Determine if we're running in a standard browser environment
+ *
+ * This allows axios to run in a web worker, and react-native.
+ * Both environments support XMLHttpRequest, but not fully standard globals.
+ *
+ * web workers:
+ *  typeof window -> undefined
+ *  typeof document -> undefined
+ *
+ * react-native:
+ *  navigator.product -> 'ReactNative'
+ */
+function isStandardBrowserEnv() {
+  if (typeof navigator !== 'undefined' && navigator.product === 'ReactNative') {
+    return false;
+  }
+  return (
+    typeof window !== 'undefined' &&
+    typeof document !== 'undefined'
+  );
+}
+
+/**
+ * Iterate over an Array or an Object invoking a function for each item.
+ *
+ * If `obj` is an Array callback will be called passing
+ * the value, index, and complete array for each item.
+ *
+ * If 'obj' is an Object callback will be called passing
+ * the value, key, and complete object for each property.
+ *
+ * @param {Object|Array} obj The object to iterate
+ * @param {Function} fn The callback to invoke for each item
+ */
+function forEach(obj, fn) {
+  // Don't bother if no value provided
+  if (obj === null || typeof obj === 'undefined') {
+    return;
+  }
+
+  // Force an array if not already something iterable
+  if (typeof obj !== 'object') {
+    /*eslint no-param-reassign:0*/
+    obj = [obj];
+  }
+
+  if (isArray(obj)) {
+    // Iterate over array values
+    for (var i = 0, l = obj.length; i < l; i++) {
+      fn.call(null, obj[i], i, obj);
+    }
+  } else {
+    // Iterate over object keys
+    for (var key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        fn.call(null, obj[key], key, obj);
+      }
+    }
+  }
+}
+
+/**
+ * Accepts varargs expecting each argument to be an object, then
+ * immutably merges the properties of each object and returns result.
+ *
+ * When multiple objects contain the same key the later object in
+ * the arguments list will take precedence.
+ *
+ * Example:
+ *
+ * ```js
+ * var result = merge({foo: 123}, {foo: 456});
+ * console.log(result.foo); // outputs 456
+ * ```
+ *
+ * @param {Object} obj1 Object to merge
+ * @returns {Object} Result of all merge properties
+ */
+function merge(/* obj1, obj2, obj3, ... */) {
+  var result = {};
+  function assignValue(val, key) {
+    if (typeof result[key] === 'object' && typeof val === 'object') {
+      result[key] = merge(result[key], val);
+    } else {
+      result[key] = val;
+    }
+  }
+
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    forEach(arguments[i], assignValue);
+  }
+  return result;
+}
+
+/**
+ * Extends object a by mutably adding to it the properties of object b.
+ *
+ * @param {Object} a The object to be extended
+ * @param {Object} b The object to copy properties from
+ * @param {Object} thisArg The object to bind function to
+ * @return {Object} The resulting value of object a
+ */
+function extend(a, b, thisArg) {
+  forEach(b, function assignValue(val, key) {
+    if (thisArg && typeof val === 'function') {
+      a[key] = bind(val, thisArg);
+    } else {
+      a[key] = val;
+    }
+  });
+  return a;
+}
+
+module.exports = {
+  isArray: isArray,
+  isArrayBuffer: isArrayBuffer,
+  isBuffer: isBuffer,
+  isFormData: isFormData,
+  isArrayBufferView: isArrayBufferView,
+  isString: isString,
+  isNumber: isNumber,
+  isObject: isObject,
+  isUndefined: isUndefined,
+  isDate: isDate,
+  isFile: isFile,
+  isBlob: isBlob,
+  isFunction: isFunction,
+  isStream: isStream,
+  isURLSearchParams: isURLSearchParams,
+  isStandardBrowserEnv: isStandardBrowserEnv,
+  forEach: forEach,
+  merge: merge,
+  extend: extend,
+  trim: trim
+};
+
+
+/***/ }),
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -103,7 +413,7 @@ if (true) {
   // By explicitly using `prop-types` you are opting into new development behavior.
   // http://fb.me/prop-types-in-prod
   var throwOnDirectAccess = true;
-  module.exports = __webpack_require__(34)(isValidElement, throwOnDirectAccess);
+  module.exports = __webpack_require__(41)(isValidElement, throwOnDirectAccess);
 } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
@@ -112,7 +422,7 @@ if (true) {
 
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -209,7 +519,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -251,7 +561,7 @@ emptyFunction.thatReturnsArgument = function (arg) {
 module.exports = emptyFunction;
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -267,7 +577,7 @@ module.exports = emptyFunction;
 var printWarning = function() {};
 
 if (true) {
-  var ReactPropTypesSecret = __webpack_require__(9);
+  var ReactPropTypesSecret = __webpack_require__(11);
   var loggedTypeFailures = {};
 
   printWarning = function(text) {
@@ -349,7 +659,7 @@ module.exports = checkPropTypes;
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -377,7 +687,111 @@ function warning(message) {
 }
 
 /***/ }),
-/* 6 */
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+var utils = __webpack_require__(1);
+var normalizeHeaderName = __webpack_require__(75);
+
+var DEFAULT_CONTENT_TYPE = {
+  'Content-Type': 'application/x-www-form-urlencoded'
+};
+
+function setContentTypeIfUnset(headers, value) {
+  if (!utils.isUndefined(headers) && utils.isUndefined(headers['Content-Type'])) {
+    headers['Content-Type'] = value;
+  }
+}
+
+function getDefaultAdapter() {
+  var adapter;
+  if (typeof XMLHttpRequest !== 'undefined') {
+    // For browsers use XHR adapter
+    adapter = __webpack_require__(20);
+  } else if (typeof process !== 'undefined') {
+    // For node use HTTP adapter
+    adapter = __webpack_require__(20);
+  }
+  return adapter;
+}
+
+var defaults = {
+  adapter: getDefaultAdapter(),
+
+  transformRequest: [function transformRequest(data, headers) {
+    normalizeHeaderName(headers, 'Content-Type');
+    if (utils.isFormData(data) ||
+      utils.isArrayBuffer(data) ||
+      utils.isBuffer(data) ||
+      utils.isStream(data) ||
+      utils.isFile(data) ||
+      utils.isBlob(data)
+    ) {
+      return data;
+    }
+    if (utils.isArrayBufferView(data)) {
+      return data.buffer;
+    }
+    if (utils.isURLSearchParams(data)) {
+      setContentTypeIfUnset(headers, 'application/x-www-form-urlencoded;charset=utf-8');
+      return data.toString();
+    }
+    if (utils.isObject(data)) {
+      setContentTypeIfUnset(headers, 'application/json;charset=utf-8');
+      return JSON.stringify(data);
+    }
+    return data;
+  }],
+
+  transformResponse: [function transformResponse(data) {
+    /*eslint no-param-reassign:0*/
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) { /* Ignore */ }
+    }
+    return data;
+  }],
+
+  /**
+   * A timeout in milliseconds to abort a request. If set to 0 (default) a
+   * timeout is not created.
+   */
+  timeout: 0,
+
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+
+  maxContentLength: -1,
+
+  validateStatus: function validateStatus(status) {
+    return status >= 200 && status < 300;
+  }
+};
+
+defaults.headers = {
+  common: {
+    'Accept': 'application/json, text/plain, */*'
+  }
+};
+
+utils.forEach(['delete', 'get', 'head'], function forEachMethodNoData(method) {
+  defaults.headers[method] = {};
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  defaults.headers[method] = utils.merge(DEFAULT_CONTENT_TYPE);
+});
+
+module.exports = defaults;
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(74)))
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -436,7 +850,7 @@ function invariant(condition, format, a, b, c, d, e, f) {
 module.exports = invariant;
 
 /***/ }),
-/* 7 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -459,7 +873,7 @@ if (true) {
 module.exports = emptyObject;
 
 /***/ }),
-/* 8 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -473,7 +887,7 @@ module.exports = emptyObject;
 
 
 
-var emptyFunction = __webpack_require__(3);
+var emptyFunction = __webpack_require__(4);
 
 /**
  * Similar to invariant but only logs a warning if the condition is not met.
@@ -527,7 +941,7 @@ if (true) {
 module.exports = warning;
 
 /***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -546,13 +960,13 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return subscriptionShape; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return storeShape; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_prop_types__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_prop_types__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_prop_types__);
 
 
@@ -570,19 +984,19 @@ var storeShape = __WEBPACK_IMPORTED_MODULE_0_prop_types___default.a.shape({
 });
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = connectAdvanced;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_hoist_non_react_statics__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_hoist_non_react_statics__ = __webpack_require__(42);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_hoist_non_react_statics___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_hoist_non_react_statics__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_invariant__ = __webpack_require__(36);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_invariant__ = __webpack_require__(43);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_invariant___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_invariant__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils_Subscription__ = __webpack_require__(37);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__utils_PropTypes__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils_Subscription__ = __webpack_require__(44);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__utils_PropTypes__ = __webpack_require__(12);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -874,7 +1288,7 @@ selectorFactory) {
 }
 
 /***/ }),
-/* 12 */
+/* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -885,7 +1299,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "applyMiddleware", function() { return applyMiddleware; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "compose", function() { return compose; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__DO_NOT_USE__ActionTypes", function() { return ActionTypes; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_symbol_observable__ = __webpack_require__(41);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_symbol_observable__ = __webpack_require__(48);
 
 
 /**
@@ -1477,7 +1891,7 @@ if ("development" !== 'production' && typeof isCrushed.name === 'string' && isCr
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, exports) {
 
 var g;
@@ -1504,14 +1918,14 @@ module.exports = g;
 
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = wrapMapToPropsConstant;
 /* unused harmony export getDependsOnOwnProps */
 /* harmony export (immutable) */ __webpack_exports__["b"] = wrapMapToPropsFunc;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_verifyPlainObject__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_verifyPlainObject__ = __webpack_require__(17);
 
 
 function wrapMapToPropsConstant(getConstant) {
@@ -1581,13 +1995,13 @@ function wrapMapToPropsFunc(mapToProps, methodName) {
 }
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = verifyPlainObject;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_lodash_es_isPlainObject__ = __webpack_require__(44);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__warning__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_lodash_es_isPlainObject__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__warning__ = __webpack_require__(6);
 
 
 
@@ -1598,11 +2012,11 @@ function verifyPlainObject(value, displayName, methodName) {
 }
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__root_js__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__root_js__ = __webpack_require__(53);
 
 
 /** Built-in value references. */
@@ -1612,7 +2026,275 @@ var Symbol = __WEBPACK_IMPORTED_MODULE_0__root_js__["a" /* default */].Symbol;
 
 
 /***/ }),
-/* 17 */
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = function bind(fn, thisArg) {
+  return function wrap() {
+    var args = new Array(arguments.length);
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i];
+    }
+    return fn.apply(thisArg, args);
+  };
+};
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+var settle = __webpack_require__(76);
+var buildURL = __webpack_require__(78);
+var parseHeaders = __webpack_require__(79);
+var isURLSameOrigin = __webpack_require__(80);
+var createError = __webpack_require__(21);
+var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(81);
+
+module.exports = function xhrAdapter(config) {
+  return new Promise(function dispatchXhrRequest(resolve, reject) {
+    var requestData = config.data;
+    var requestHeaders = config.headers;
+
+    if (utils.isFormData(requestData)) {
+      delete requestHeaders['Content-Type']; // Let the browser set it
+    }
+
+    var request = new XMLHttpRequest();
+    var loadEvent = 'onreadystatechange';
+    var xDomain = false;
+
+    // For IE 8/9 CORS support
+    // Only supports POST and GET calls and doesn't returns the response headers.
+    // DON'T do this for testing b/c XMLHttpRequest is mocked, not XDomainRequest.
+    if ("development" !== 'test' &&
+        typeof window !== 'undefined' &&
+        window.XDomainRequest && !('withCredentials' in request) &&
+        !isURLSameOrigin(config.url)) {
+      request = new window.XDomainRequest();
+      loadEvent = 'onload';
+      xDomain = true;
+      request.onprogress = function handleProgress() {};
+      request.ontimeout = function handleTimeout() {};
+    }
+
+    // HTTP basic authentication
+    if (config.auth) {
+      var username = config.auth.username || '';
+      var password = config.auth.password || '';
+      requestHeaders.Authorization = 'Basic ' + btoa(username + ':' + password);
+    }
+
+    request.open(config.method.toUpperCase(), buildURL(config.url, config.params, config.paramsSerializer), true);
+
+    // Set the request timeout in MS
+    request.timeout = config.timeout;
+
+    // Listen for ready state
+    request[loadEvent] = function handleLoad() {
+      if (!request || (request.readyState !== 4 && !xDomain)) {
+        return;
+      }
+
+      // The request errored out and we didn't get a response, this will be
+      // handled by onerror instead
+      // With one exception: request that using file: protocol, most browsers
+      // will return status as 0 even though it's a successful request
+      if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
+        return;
+      }
+
+      // Prepare the response
+      var responseHeaders = 'getAllResponseHeaders' in request ? parseHeaders(request.getAllResponseHeaders()) : null;
+      var responseData = !config.responseType || config.responseType === 'text' ? request.responseText : request.response;
+      var response = {
+        data: responseData,
+        // IE sends 1223 instead of 204 (https://github.com/axios/axios/issues/201)
+        status: request.status === 1223 ? 204 : request.status,
+        statusText: request.status === 1223 ? 'No Content' : request.statusText,
+        headers: responseHeaders,
+        config: config,
+        request: request
+      };
+
+      settle(resolve, reject, response);
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle low level network errors
+    request.onerror = function handleError() {
+      // Real errors are hidden from us by the browser
+      // onerror should only fire if it's a network error
+      reject(createError('Network Error', config, null, request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle timeout
+    request.ontimeout = function handleTimeout() {
+      reject(createError('timeout of ' + config.timeout + 'ms exceeded', config, 'ECONNABORTED',
+        request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Add xsrf header
+    // This is only done if running in a standard browser environment.
+    // Specifically not if we're in a web worker, or react-native.
+    if (utils.isStandardBrowserEnv()) {
+      var cookies = __webpack_require__(82);
+
+      // Add xsrf header
+      var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
+          cookies.read(config.xsrfCookieName) :
+          undefined;
+
+      if (xsrfValue) {
+        requestHeaders[config.xsrfHeaderName] = xsrfValue;
+      }
+    }
+
+    // Add headers to the request
+    if ('setRequestHeader' in request) {
+      utils.forEach(requestHeaders, function setRequestHeader(val, key) {
+        if (typeof requestData === 'undefined' && key.toLowerCase() === 'content-type') {
+          // Remove Content-Type if data is undefined
+          delete requestHeaders[key];
+        } else {
+          // Otherwise add header to the request
+          request.setRequestHeader(key, val);
+        }
+      });
+    }
+
+    // Add withCredentials to request if needed
+    if (config.withCredentials) {
+      request.withCredentials = true;
+    }
+
+    // Add responseType to request if needed
+    if (config.responseType) {
+      try {
+        request.responseType = config.responseType;
+      } catch (e) {
+        // Expected DOMException thrown by browsers not compatible XMLHttpRequest Level 2.
+        // But, this can be suppressed for 'json' type as it can be parsed by default 'transformResponse' function.
+        if (config.responseType !== 'json') {
+          throw e;
+        }
+      }
+    }
+
+    // Handle progress if needed
+    if (typeof config.onDownloadProgress === 'function') {
+      request.addEventListener('progress', config.onDownloadProgress);
+    }
+
+    // Not all browsers support upload events
+    if (typeof config.onUploadProgress === 'function' && request.upload) {
+      request.upload.addEventListener('progress', config.onUploadProgress);
+    }
+
+    if (config.cancelToken) {
+      // Handle cancellation
+      config.cancelToken.promise.then(function onCanceled(cancel) {
+        if (!request) {
+          return;
+        }
+
+        request.abort();
+        reject(cancel);
+        // Clean up request
+        request = null;
+      });
+    }
+
+    if (requestData === undefined) {
+      requestData = null;
+    }
+
+    // Send the request
+    request.send(requestData);
+  });
+};
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var enhanceError = __webpack_require__(77);
+
+/**
+ * Create an Error with the specified message, config, error code, request and response.
+ *
+ * @param {string} message The error message.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ * @returns {Error} The created error.
+ */
+module.exports = function createError(message, config, code, request, response) {
+  var error = new Error(message);
+  return enhanceError(error, config, code, request, response);
+};
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = function isCancel(value) {
+  return !!(value && value.__CANCEL__);
+};
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * A `Cancel` is an object that is thrown when an operation is canceled.
+ *
+ * @class
+ * @param {string=} message The message.
+ */
+function Cancel(message) {
+  this.message = message;
+}
+
+Cancel.prototype.toString = function toString() {
+  return 'Cancel' + (this.message ? ': ' + this.message : '');
+};
+
+Cancel.prototype.__CANCEL__ = true;
+
+module.exports = Cancel;
+
+
+/***/ }),
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1622,18 +2304,18 @@ var _react = __webpack_require__(0);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _reactDom = __webpack_require__(19);
+var _reactDom = __webpack_require__(26);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _App = __webpack_require__(31);
+var _App = __webpack_require__(38);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 _reactDom2.default.render(_react2.default.createElement(_App.App, null), document.getElementById('root'));
 
 /***/ }),
-/* 18 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1654,12 +2336,12 @@ if (true) {
   (function() {
 'use strict';
 
-var _assign = __webpack_require__(2);
-var invariant = __webpack_require__(6);
-var emptyObject = __webpack_require__(7);
-var warning = __webpack_require__(8);
-var emptyFunction = __webpack_require__(3);
-var checkPropTypes = __webpack_require__(4);
+var _assign = __webpack_require__(3);
+var invariant = __webpack_require__(8);
+var emptyObject = __webpack_require__(9);
+var warning = __webpack_require__(10);
+var emptyFunction = __webpack_require__(4);
+var checkPropTypes = __webpack_require__(5);
 
 // TODO: this is special because it gets imported during build.
 
@@ -3126,7 +3808,7 @@ module.exports = react;
 
 
 /***/ }),
-/* 19 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3166,12 +3848,12 @@ if (false) {
   checkDCE();
   module.exports = require('./cjs/react-dom.production.min.js');
 } else {
-  module.exports = __webpack_require__(20);
+  module.exports = __webpack_require__(27);
 }
 
 
 /***/ }),
-/* 20 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3192,19 +3874,19 @@ if (true) {
   (function() {
 'use strict';
 
-var invariant = __webpack_require__(6);
+var invariant = __webpack_require__(8);
 var React = __webpack_require__(0);
-var warning = __webpack_require__(8);
-var ExecutionEnvironment = __webpack_require__(21);
-var _assign = __webpack_require__(2);
-var emptyFunction = __webpack_require__(3);
-var checkPropTypes = __webpack_require__(4);
-var getActiveElement = __webpack_require__(22);
-var shallowEqual = __webpack_require__(23);
-var containsNode = __webpack_require__(24);
-var emptyObject = __webpack_require__(7);
-var hyphenateStyleName = __webpack_require__(27);
-var camelizeStyleName = __webpack_require__(29);
+var warning = __webpack_require__(10);
+var ExecutionEnvironment = __webpack_require__(28);
+var _assign = __webpack_require__(3);
+var emptyFunction = __webpack_require__(4);
+var checkPropTypes = __webpack_require__(5);
+var getActiveElement = __webpack_require__(29);
+var shallowEqual = __webpack_require__(30);
+var containsNode = __webpack_require__(31);
+var emptyObject = __webpack_require__(9);
+var hyphenateStyleName = __webpack_require__(34);
+var camelizeStyleName = __webpack_require__(36);
 
 // Relying on the `invariant()` implementation lets us
 // have preserve the format and params in the www builds.
@@ -20608,7 +21290,7 @@ module.exports = reactDom;
 
 
 /***/ }),
-/* 21 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20647,7 +21329,7 @@ var ExecutionEnvironment = {
 module.exports = ExecutionEnvironment;
 
 /***/ }),
-/* 22 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20689,7 +21371,7 @@ function getActiveElement(doc) /*?DOMElement*/{
 module.exports = getActiveElement;
 
 /***/ }),
-/* 23 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20760,7 +21442,7 @@ function shallowEqual(objA, objB) {
 module.exports = shallowEqual;
 
 /***/ }),
-/* 24 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20775,7 +21457,7 @@ module.exports = shallowEqual;
  * 
  */
 
-var isTextNode = __webpack_require__(25);
+var isTextNode = __webpack_require__(32);
 
 /*eslint-disable no-bitwise */
 
@@ -20803,7 +21485,7 @@ function containsNode(outerNode, innerNode) {
 module.exports = containsNode;
 
 /***/ }),
-/* 25 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20818,7 +21500,7 @@ module.exports = containsNode;
  * @typechecks
  */
 
-var isNode = __webpack_require__(26);
+var isNode = __webpack_require__(33);
 
 /**
  * @param {*} object The object to check.
@@ -20831,7 +21513,7 @@ function isTextNode(object) {
 module.exports = isTextNode;
 
 /***/ }),
-/* 26 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20859,7 +21541,7 @@ function isNode(object) {
 module.exports = isNode;
 
 /***/ }),
-/* 27 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20874,7 +21556,7 @@ module.exports = isNode;
 
 
 
-var hyphenate = __webpack_require__(28);
+var hyphenate = __webpack_require__(35);
 
 var msPattern = /^ms-/;
 
@@ -20901,7 +21583,7 @@ function hyphenateStyleName(string) {
 module.exports = hyphenateStyleName;
 
 /***/ }),
-/* 28 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20937,7 +21619,7 @@ function hyphenate(string) {
 module.exports = hyphenate;
 
 /***/ }),
-/* 29 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20952,7 +21634,7 @@ module.exports = hyphenate;
 
 
 
-var camelize = __webpack_require__(30);
+var camelize = __webpack_require__(37);
 
 var msPattern = /^-ms-/;
 
@@ -20980,7 +21662,7 @@ function camelizeStyleName(string) {
 module.exports = camelizeStyleName;
 
 /***/ }),
-/* 30 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21015,7 +21697,7 @@ function camelize(string) {
 module.exports = camelize;
 
 /***/ }),
-/* 31 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21030,21 +21712,25 @@ var _react = __webpack_require__(0);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _reactRedux = __webpack_require__(32);
+var _reactRedux = __webpack_require__(39);
 
-var _Store = __webpack_require__(57);
+var _Store = __webpack_require__(64);
 
-__webpack_require__(62);
+var _Companies = __webpack_require__(69);
 
-__webpack_require__(63);
+var _Companies2 = _interopRequireDefault(_Companies);
 
-var _companyDataHeaders = __webpack_require__(64);
+__webpack_require__(94);
 
-var _Table = __webpack_require__(65);
+__webpack_require__(95);
+
+var _companyDataHeaders = __webpack_require__(96);
+
+var _Table = __webpack_require__(97);
 
 var _Table2 = _interopRequireDefault(_Table);
 
-var _demoMini = __webpack_require__(82);
+var _demoMini = __webpack_require__(107);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -21062,22 +21748,19 @@ var App = exports.App = function App() {
   return _react2.default.createElement(
     _reactRedux.Provider,
     { store: _Store.store },
-    _react2.default.createElement(_Table2.default, {
-      headers: _companyDataHeaders.companyDataHeaders,
-      data: _demoMini.tableData
-    })
+    _react2.default.createElement(_Companies2.default, null)
   );
 };
 
 /***/ }),
-/* 32 */
+/* 39 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_Provider__ = __webpack_require__(33);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_connectAdvanced__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__connect_connect__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_Provider__ = __webpack_require__(40);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__components_connectAdvanced__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__connect_connect__ = __webpack_require__(45);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Provider", function() { return __WEBPACK_IMPORTED_MODULE_0__components_Provider__["b"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "createProvider", function() { return __WEBPACK_IMPORTED_MODULE_0__components_Provider__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "connectAdvanced", function() { return __WEBPACK_IMPORTED_MODULE_1__components_connectAdvanced__["a"]; });
@@ -21089,17 +21772,17 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 /***/ }),
-/* 33 */
+/* 40 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = createProvider;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utils_PropTypes__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils_warning__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__utils_PropTypes__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils_warning__ = __webpack_require__(6);
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -21174,7 +21857,7 @@ function createProvider() {
 /* harmony default export */ __webpack_exports__["b"] = (createProvider());
 
 /***/ }),
-/* 34 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21187,10 +21870,10 @@ function createProvider() {
 
 
 
-var assign = __webpack_require__(2);
+var assign = __webpack_require__(3);
 
-var ReactPropTypesSecret = __webpack_require__(9);
-var checkPropTypes = __webpack_require__(4);
+var ReactPropTypesSecret = __webpack_require__(11);
+var checkPropTypes = __webpack_require__(5);
 
 var printWarning = function() {};
 
@@ -21736,7 +22419,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 
 /***/ }),
-/* 35 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21811,7 +22494,7 @@ module.exports = hoistNonReactStatics;
 
 
 /***/ }),
-/* 36 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21867,7 +22550,7 @@ module.exports = invariant;
 
 
 /***/ }),
-/* 37 */
+/* 44 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -21966,17 +22649,17 @@ var Subscription = function () {
 
 
 /***/ }),
-/* 38 */
+/* 45 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* unused harmony export createConnect */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_connectAdvanced__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_shallowEqual__ = __webpack_require__(39);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__mapDispatchToProps__ = __webpack_require__(40);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__mapStateToProps__ = __webpack_require__(53);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__mergeProps__ = __webpack_require__(54);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__selectorFactory__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_connectAdvanced__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__utils_shallowEqual__ = __webpack_require__(46);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__mapDispatchToProps__ = __webpack_require__(47);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__mapStateToProps__ = __webpack_require__(60);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__mergeProps__ = __webpack_require__(61);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__selectorFactory__ = __webpack_require__(62);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
@@ -22082,7 +22765,7 @@ function createConnect() {
 /* harmony default export */ __webpack_exports__["a"] = (createConnect());
 
 /***/ }),
-/* 39 */
+/* 46 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22119,15 +22802,15 @@ function shallowEqual(objA, objB) {
 }
 
 /***/ }),
-/* 40 */
+/* 47 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* unused harmony export whenMapDispatchToPropsIsFunction */
 /* unused harmony export whenMapDispatchToPropsIsMissing */
 /* unused harmony export whenMapDispatchToPropsIsObject */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_redux__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wrapMapToProps__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_redux__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__wrapMapToProps__ = __webpack_require__(16);
 
 
 
@@ -22150,11 +22833,11 @@ function whenMapDispatchToPropsIsObject(mapDispatchToProps) {
 /* harmony default export */ __webpack_exports__["a"] = ([whenMapDispatchToPropsIsFunction, whenMapDispatchToPropsIsMissing, whenMapDispatchToPropsIsObject]);
 
 /***/ }),
-/* 41 */
+/* 48 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ponyfill_js__ = __webpack_require__(43);
+/* WEBPACK VAR INJECTION */(function(global, module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ponyfill_js__ = __webpack_require__(50);
 /* global window */
 
 
@@ -22175,10 +22858,10 @@ if (typeof self !== 'undefined') {
 var result = Object(__WEBPACK_IMPORTED_MODULE_0__ponyfill_js__["a" /* default */])(root);
 /* harmony default export */ __webpack_exports__["a"] = (result);
 
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(13), __webpack_require__(42)(module)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(15), __webpack_require__(49)(module)))
 
 /***/ }),
-/* 42 */
+/* 49 */
 /***/ (function(module, exports) {
 
 module.exports = function(originalModule) {
@@ -22208,7 +22891,7 @@ module.exports = function(originalModule) {
 
 
 /***/ }),
-/* 43 */
+/* 50 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22233,13 +22916,13 @@ function symbolObservablePonyfill(root) {
 
 
 /***/ }),
-/* 44 */
+/* 51 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseGetTag_js__ = __webpack_require__(45);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getPrototype_js__ = __webpack_require__(50);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__isObjectLike_js__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__baseGetTag_js__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getPrototype_js__ = __webpack_require__(57);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__isObjectLike_js__ = __webpack_require__(59);
 
 
 
@@ -22305,13 +22988,13 @@ function isPlainObject(value) {
 
 
 /***/ }),
-/* 45 */
+/* 52 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Symbol_js__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getRawTag_js__ = __webpack_require__(48);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__objectToString_js__ = __webpack_require__(49);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Symbol_js__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__getRawTag_js__ = __webpack_require__(55);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__objectToString_js__ = __webpack_require__(56);
 
 
 
@@ -22343,11 +23026,11 @@ function baseGetTag(value) {
 
 
 /***/ }),
-/* 46 */
+/* 53 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__freeGlobal_js__ = __webpack_require__(47);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__freeGlobal_js__ = __webpack_require__(54);
 
 
 /** Detect free variable `self`. */
@@ -22360,7 +23043,7 @@ var root = __WEBPACK_IMPORTED_MODULE_0__freeGlobal_js__["a" /* default */] || fr
 
 
 /***/ }),
-/* 47 */
+/* 54 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22369,14 +23052,14 @@ var freeGlobal = typeof global == 'object' && global && global.Object === Object
 
 /* harmony default export */ __webpack_exports__["a"] = (freeGlobal);
 
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(13)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(15)))
 
 /***/ }),
-/* 48 */
+/* 55 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Symbol_js__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Symbol_js__ = __webpack_require__(18);
 
 
 /** Used for built-in method references. */
@@ -22426,7 +23109,7 @@ function getRawTag(value) {
 
 
 /***/ }),
-/* 49 */
+/* 56 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22455,11 +23138,11 @@ function objectToString(value) {
 
 
 /***/ }),
-/* 50 */
+/* 57 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__overArg_js__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__overArg_js__ = __webpack_require__(58);
 
 
 /** Built-in value references. */
@@ -22469,7 +23152,7 @@ var getPrototype = Object(__WEBPACK_IMPORTED_MODULE_0__overArg_js__["a" /* defau
 
 
 /***/ }),
-/* 51 */
+/* 58 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22491,7 +23174,7 @@ function overArg(func, transform) {
 
 
 /***/ }),
-/* 52 */
+/* 59 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22527,13 +23210,13 @@ function isObjectLike(value) {
 
 
 /***/ }),
-/* 53 */
+/* 60 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* unused harmony export whenMapStateToPropsIsFunction */
 /* unused harmony export whenMapStateToPropsIsMissing */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wrapMapToProps__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__wrapMapToProps__ = __webpack_require__(16);
 
 
 function whenMapStateToPropsIsFunction(mapStateToProps) {
@@ -22549,7 +23232,7 @@ function whenMapStateToPropsIsMissing(mapStateToProps) {
 /* harmony default export */ __webpack_exports__["a"] = ([whenMapStateToPropsIsFunction, whenMapStateToPropsIsMissing]);
 
 /***/ }),
-/* 54 */
+/* 61 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22557,7 +23240,7 @@ function whenMapStateToPropsIsMissing(mapStateToProps) {
 /* unused harmony export wrapMergePropsFunc */
 /* unused harmony export whenMergePropsIsFunction */
 /* unused harmony export whenMergePropsIsOmitted */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_verifyPlainObject__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_verifyPlainObject__ = __webpack_require__(17);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -22605,14 +23288,14 @@ function whenMergePropsIsOmitted(mergeProps) {
 /* harmony default export */ __webpack_exports__["a"] = ([whenMergePropsIsFunction, whenMergePropsIsOmitted]);
 
 /***/ }),
-/* 55 */
+/* 62 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* unused harmony export impureFinalPropsSelectorFactory */
 /* unused harmony export pureFinalPropsSelectorFactory */
 /* harmony export (immutable) */ __webpack_exports__["a"] = finalPropsSelectorFactory;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__verifySubselectors__ = __webpack_require__(56);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__verifySubselectors__ = __webpack_require__(63);
 function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
 
@@ -22717,12 +23400,12 @@ function finalPropsSelectorFactory(dispatch, _ref2) {
 }
 
 /***/ }),
-/* 56 */
+/* 63 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = verifySubselectors;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_warning__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_warning__ = __webpack_require__(6);
 
 
 function verify(selector, methodName, displayName) {
@@ -22742,7 +23425,7 @@ function verifySubselectors(mapStateToProps, mapDispatchToProps, mergeProps, dis
 }
 
 /***/ }),
-/* 57 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22755,13 +23438,13 @@ exports.store = undefined;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _redux = __webpack_require__(12);
+var _redux = __webpack_require__(14);
 
-var _reduxThunk = __webpack_require__(58);
+var _reduxThunk = __webpack_require__(65);
 
 var _reduxThunk2 = _interopRequireDefault(_reduxThunk);
 
-var _reducers = __webpack_require__(59);
+var _reducers = __webpack_require__(66);
 
 var reducers = _interopRequireWildcard(_reducers);
 
@@ -22774,7 +23457,7 @@ var reducer = (0, _redux.combineReducers)(_extends({}, reducers));
 var store = exports.store = (0, _redux.createStore)(reducer, {}, (0, _redux.applyMiddleware)(_reduxThunk2.default));
 
 /***/ }),
-/* 58 */
+/* 65 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22801,7 +23484,7 @@ thunk.withExtraArgument = createThunkMiddleware;
 /* harmony default export */ __webpack_exports__["default"] = (thunk);
 
 /***/ }),
-/* 59 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22812,7 +23495,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.user = undefined;
 
-var _user = __webpack_require__(60);
+var _user = __webpack_require__(67);
 
 var _user2 = _interopRequireDefault(_user);
 
@@ -22821,7 +23504,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 exports.user = _user2.default;
 
 /***/ }),
-/* 60 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22835,7 +23518,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 exports.default = update;
 
-var _demo = __webpack_require__(61);
+var _demo = __webpack_require__(68);
 
 var constants = _interopRequireWildcard(_demo);
 
@@ -22856,26 +23539,1331 @@ function update() {
 }
 
 /***/ }),
-/* 61 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(exports,"__esModule",{value:true});var tableData=exports.tableData=[{"AP":"3.6","CPV":"0.0005","CR":"0.005885","CTR":"0.03514","CV":"0.000207","Clicks":"3908","Conversion Cap":"","Conversions":"23","Conversions as Counted for Conversion Cap":"","Cost":"58.5937","Country":"United Kingdom","EPC":"0.0212","EPV":"0.0007","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"24.2063","ROI":"0.413121","Revenue":"82.8","Visits":"111212"},{"AP":"3.6","CPV":"0.0005","CR":"0.008153","CTR":"0.030083","CV":"0.000245","Clicks":"2821","Conversion Cap":"","Conversions":"23","Conversions as Counted for Conversion Cap":"","Cost":"49.5621","Country":"United Kingdom","EPC":"0.0294","EPV":"0.0009","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"33.2379","ROI":"0.670633","Revenue":"82.8","Visits":"93773"},{"AP":"3.5071","CPV":"0.0005","CR":"0.006298","CTR":"0.03144","CV":"0.000198","Clicks":"2223","Conversion Cap":"600","Conversions":"14","Conversions as Counted for Conversion Cap":"0","Cost":"36.9891","Country":"United Kingdom","EPC":"0.0221","EPV":"0.0007","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"12.1109","ROI":"0.327417","Revenue":"49.1","Visits":"70707"},{"AP":"3.2","CPV":"0.0005","CR":"0.00432","CTR":"0.026877","CV":"0.000116","Clicks":"1389","Conversion Cap":"","Conversions":"6","Conversions as Counted for Conversion Cap":"","Cost":"27.3246","Country":"United Kingdom","EPC":"0.0138","EPV":"0.0004","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-8.1246","ROI":"-0.297337","Revenue":"19.2","Visits":"51680"},{"AP":"3.52","CPV":"0.0005","CR":"0.007924","CTR":"0.025185","CV":"0.0002","Clicks":"631","Conversion Cap":"600","Conversions":"5","Conversions as Counted for Conversion Cap":"0","Cost":"12.9047","Country":"United Kingdom","EPC":"0.0279","EPV":"0.0007","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"4.6953","ROI":"0.363843","Revenue":"17.6","Visits":"25055"},{"AP":"3.6","CPV":"0.0005","CR":"0.000986","CTR":"0.108746","CV":"0.000107","Clicks":"2028","Conversion Cap":"","Conversions":"2","Conversions as Counted for Conversion Cap":"","Cost":"10.1163","Country":"United Kingdom","EPC":"0.0036","EPV":"0.0004","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-2.9163","ROI":"-0.288278","Revenue":"7.2","Visits":"18649"},{"AP":"3.5","CPV":"0.0005","CR":"0.005671","CTR":"0.032238","CV":"0.000183","Clicks":"529","Conversion Cap":"600","Conversions":"3","Conversions as Counted for Conversion Cap":"0","Cost":"7.7407","Country":"United Kingdom","EPC":"0.0198","EPV":"0.0006","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"2.7593","ROI":"0.356459","Revenue":"10.5","Visits":"16409"},{"AP":"3.2","CPV":"0.0005","CR":"0.00678","CTR":"0.0237","CV":"0.000161","Clicks":"295","Conversion Cap":"","Conversions":"2","Conversions as Counted for Conversion Cap":"","Cost":"6.7482","Country":"United Kingdom","EPC":"0.0217","EPV":"0.0005","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.3482","ROI":"-0.051603","Revenue":"6.4","Visits":"12447"},{"AP":"3.2","CPV":"0.0005","CR":"0.008403","CTR":"0.020537","CV":"0.000173","Clicks":"238","Conversion Cap":"","Conversions":"2","Conversions as Counted for Conversion Cap":"","Cost":"5.5917","Country":"United Kingdom","EPC":"0.0269","EPV":"0.0006","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"0.8083","ROI":"0.14456","Revenue":"6.4","Visits":"11589"},{"AP":"3.6","CPV":"0.0005","CR":"0.008368","CTR":"0.021713","CV":"0.000182","Clicks":"239","Conversion Cap":"","Conversions":"2","Conversions as Counted for Conversion Cap":"","Cost":"5.2429","Country":"United Kingdom","EPC":"0.0301","EPV":"0.0007","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"1.9571","ROI":"0.373278","Revenue":"7.2","Visits":"11007"},{"AP":"3.55","CPV":"0.0005","CR":"0.010811","CTR":"0.017654","CV":"0.000191","Clicks":"185","Conversion Cap":"600","Conversions":"2","Conversions as Counted for Conversion Cap":"0","Cost":"4.953","Country":"United Kingdom","EPC":"0.0384","EPV":"0.0007","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"2.147","ROI":"0.433486","Revenue":"7.1","Visits":"10479"},{"AP":"3.2","CPV":"0.0005","CR":"0.004902","CTR":"0.019762","CV":"0.000097","Clicks":"204","Conversion Cap":"","Conversions":"1","Conversions as Counted for Conversion Cap":"","Cost":"4.9131","Country":"United Kingdom","EPC":"0.0157","EPV":"0.0003","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-1.7131","ROI":"-0.348679","Revenue":"3.2","Visits":"10323"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.021745","CV":"0","Clicks":"223","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"4.7787","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-4.7787","ROI":"-1","Revenue":"0","Visits":"10255"},{"AP":"2","CPV":"0.0005","CR":"0.006024","CTR":"0.022834","CV":"0.000138","Clicks":"166","Conversion Cap":"","Conversions":"1","Conversions as Counted for Conversion Cap":"","Cost":"3.529","Country":"United Kingdom","EPC":"0.012","EPV":"0.0003","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-1.529","ROI":"-0.433264","Revenue":"2","Visits":"7270"},{"AP":"2","CPV":"0.0005","CR":"0.004587","CTR":"0.03009","CV":"0.000138","Clicks":"218","Conversion Cap":"","Conversions":"1","Conversions as Counted for Conversion Cap":"","Cost":"3.5111","Country":"United Kingdom","EPC":"0.0092","EPV":"0.0003","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-1.5111","ROI":"-0.430381","Revenue":"2","Visits":"7245"},{"AP":"2","CPV":"0.0005","CR":"0.002801","CTR":"0.049439","CV":"0.000138","Clicks":"357","Conversion Cap":"","Conversions":"1","Conversions as Counted for Conversion Cap":"","Cost":"3.4904","Country":"United Kingdom","EPC":"0.0056","EPV":"0.0003","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-1.4904","ROI":"-0.427","Revenue":"2","Visits":"7221"},{"AP":"2.5","CPV":"0.0005","CR":"0","CTR":"0","CV":"0.000145","Clicks":"0","Conversion Cap":"","Conversions":"1","Conversions as Counted for Conversion Cap":"","Cost":"3.6482","Country":"United Kingdom","EPC":"0","EPV":"0.0004","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-1.1482","ROI":"-0.314722","Revenue":"2.5","Visits":"6878"},{"AP":"2.5","CPV":"0.0005","CR":"0","CTR":"0","CV":"0.000469","Clicks":"0","Conversion Cap":"","Conversions":"2","Conversions as Counted for Conversion Cap":"","Cost":"1.9444","Country":"United Kingdom","EPC":"0","EPV":"0.0012","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"3.0556","ROI":"1.57143","Revenue":"5","Visits":"4267"},{"AP":"2.5","CPV":"0.0005","CR":"0","CTR":"0","CV":"0.000254","Clicks":"0","Conversion Cap":"","Conversions":"1","Conversions as Counted for Conversion Cap":"","Cost":"1.77","Country":"United Kingdom","EPC":"0","EPV":"0.0006","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"0.73","ROI":"0.412463","Revenue":"2.5","Visits":"3930"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.033788","CV":"0","Clicks":"104","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"1.6676","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-1.6676","ROI":"-1","Revenue":"0","Visits":"3078"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"1.6681","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-1.6681","ROI":"-1","Revenue":"0","Visits":"2763"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.028703","CV":"0","Clicks":"75","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"1.3792","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-1.3792","ROI":"-1","Revenue":"0","Visits":"2613"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.9686","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.9686","ROI":"-1","Revenue":"0","Visits":"2210"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.9993","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.9993","ROI":"-1","Revenue":"0","Visits":"2173"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.949","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.949","ROI":"-1","Revenue":"0","Visits":"2115"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.060886","CV":"0","Clicks":"99","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.8858","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.8858","ROI":"-1","Revenue":"0","Visits":"1626"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.024142","CV":"0","Clicks":"38","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.8121","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.8121","ROI":"-1","Revenue":"0","Visits":"1574"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.035415","CV":"0","Clicks":"55","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.8037","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.8037","ROI":"-1","Revenue":"0","Visits":"1553"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.022","CV":"0","Clicks":"33","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.7913","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.7913","ROI":"-1","Revenue":"0","Visits":"1500"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.022252","CV":"0","Clicks":"33","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.7533","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.7533","ROI":"-1","Revenue":"0","Visits":"1483"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.045356","CV":"0","Clicks":"63","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.7756","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.7756","ROI":"-1","Revenue":"0","Visits":"1389"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.203376","CV":"0","Clicks":"253","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.6319","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.6319","ROI":"-1","Revenue":"0","Visits":"1244"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.039421","CV":"0","Clicks":"49","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.7029","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.7029","ROI":"-1","Revenue":"0","Visits":"1243"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.159643","CV":"0","Clicks":"197","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.6528","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.6528","ROI":"-1","Revenue":"0","Visits":"1234"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.04883","CV":"0","Clicks":"48","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.5623","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.5623","ROI":"-1","Revenue":"0","Visits":"983"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.033746","CV":"0","Clicks":"30","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.4404","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.4404","ROI":"-1","Revenue":"0","Visits":"889"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.050076","CV":"0","Clicks":"33","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.3661","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.3661","ROI":"-1","Revenue":"0","Visits":"659"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.033123","CV":"0","Clicks":"21","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.3318","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.3318","ROI":"-1","Revenue":"0","Visits":"634"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.021622","CV":"0","Clicks":"12","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.285","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.285","ROI":"-1","Revenue":"0","Visits":"555"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.037523","CV":"0","Clicks":"20","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.2657","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.2657","ROI":"-1","Revenue":"0","Visits":"533"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.018367","CV":"0","Clicks":"9","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.252","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.252","ROI":"-1","Revenue":"0","Visits":"490"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.041667","CV":"0","Clicks":"20","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.2485","Country":"United Kingdom","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.2485","ROI":"-1","Revenue":"0","Visits":"480"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.008511","CV":"0","Clicks":"4","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.2386","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.2386","ROI":"-1","Revenue":"0","Visits":"470"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.006494","CV":"0","Clicks":"3","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.2502","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.2502","ROI":"-1","Revenue":"0","Visits":"462"},{"AP":"3.5","CPV":"0.0006","CR":"0.034483","CTR":"0.074359","CV":"0.002564","Clicks":"29","Conversion Cap":"600","Conversions":"1","Conversions as Counted for Conversion Cap":"0","Cost":"0.2199","Country":"Germany","EPC":"0.1207","EPV":"0.009","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"3.2801","ROI":"14.91944","Revenue":"3.5","Visits":"390"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.061889","CV":"0","Clicks":"19","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.1693","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.1693","ROI":"-1","Revenue":"0","Visits":"307"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.018797","CV":"0","Clicks":"5","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.1356","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.1356","ROI":"-1","Revenue":"0","Visits":"266"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.037879","CV":"0","Clicks":"10","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.1521","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.1521","ROI":"-1","Revenue":"0","Visits":"264"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.049618","CV":"0","Clicks":"13","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.1563","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.1563","ROI":"-1","Revenue":"0","Visits":"262"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.095238","CV":"0","Clicks":"22","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.1351","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.1351","ROI":"-1","Revenue":"0","Visits":"231"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.035874","CV":"0","Clicks":"8","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.1129","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.1129","ROI":"-1","Revenue":"0","Visits":"223"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.008969","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.1193","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.1193","ROI":"-1","Revenue":"0","Visits":"223"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.009615","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.1107","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.1107","ROI":"-1","Revenue":"0","Visits":"208"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.065089","CV":"0","Clicks":"11","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0955","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0955","ROI":"-1","Revenue":"0","Visits":"169"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.006024","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0968","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0968","ROI":"-1","Revenue":"0","Visits":"166"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.048485","CV":"0","Clicks":"8","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0855","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0855","ROI":"-1","Revenue":"0","Visits":"165"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.006536","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0815","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0815","ROI":"-1","Revenue":"0","Visits":"153"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.04","CV":"0","Clicks":"6","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0822","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0822","ROI":"-1","Revenue":"0","Visits":"150"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.006849","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0811","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0811","ROI":"-1","Revenue":"0","Visits":"146"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.028369","CV":"0","Clicks":"4","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0799","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0799","ROI":"-1","Revenue":"0","Visits":"141"},{"AP":"3.5","CPV":"0.0005","CR":"0.166667","CTR":"0.043165","CV":"0.007194","Clicks":"6","Conversion Cap":"600","Conversions":"1","Conversions as Counted for Conversion Cap":"0","Cost":"0.0707","Country":"Germany","EPC":"0.5833","EPV":"0.0252","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"3.4293","ROI":"48.521788","Revenue":"3.5","Visits":"139"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.066176","CV":"0","Clicks":"9","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.078","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.078","ROI":"-1","Revenue":"0","Visits":"136"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.014706","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0811","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0811","ROI":"-1","Revenue":"0","Visits":"136"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.015504","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0707","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0707","ROI":"-1","Revenue":"0","Visits":"129"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.033898","CV":"0","Clicks":"4","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.064","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.064","ROI":"-1","Revenue":"0","Visits":"118"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.063","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.063","ROI":"-1","Revenue":"0","Visits":"112"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.027027","CV":"0","Clicks":"3","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0653","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0653","ROI":"-1","Revenue":"0","Visits":"111"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.037383","CV":"0","Clicks":"4","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0562","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0562","ROI":"-1","Revenue":"0","Visits":"107"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.057143","CV":"0","Clicks":"6","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0513","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0513","ROI":"-1","Revenue":"0","Visits":"105"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.069307","CV":"0","Clicks":"7","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0577","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0577","ROI":"-1","Revenue":"0","Visits":"101"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.020619","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.046","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.046","ROI":"-1","Revenue":"0","Visits":"97"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.073684","CV":"0","Clicks":"7","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0486","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0486","ROI":"-1","Revenue":"0","Visits":"95"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.042105","CV":"0","Clicks":"4","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0475","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0475","ROI":"-1","Revenue":"0","Visits":"95"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.064516","CV":"0","Clicks":"6","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0372","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0372","ROI":"-1","Revenue":"0","Visits":"93"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.010753","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0485","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0485","ROI":"-1","Revenue":"0","Visits":"93"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.086957","CV":"0","Clicks":"8","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0488","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0488","ROI":"-1","Revenue":"0","Visits":"92"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.034483","CV":"0","Clicks":"3","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0413","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0413","ROI":"-1","Revenue":"0","Visits":"87"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0358","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0358","ROI":"-1","Revenue":"0","Visits":"75"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.014085","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0312","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0312","ROI":"-1","Revenue":"0","Visits":"71"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.048387","CV":"0","Clicks":"3","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0272","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0272","ROI":"-1","Revenue":"0","Visits":"62"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.016129","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.028","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.028","ROI":"-1","Revenue":"0","Visits":"62"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.080645","CV":"0","Clicks":"5","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.025","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.025","ROI":"-1","Revenue":"0","Visits":"62"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.016393","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0308","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0308","ROI":"-1","Revenue":"0","Visits":"61"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0313","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0313","ROI":"-1","Revenue":"0","Visits":"61"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0233","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0233","ROI":"-1","Revenue":"0","Visits":"59"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0291","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0291","ROI":"-1","Revenue":"0","Visits":"58"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.087719","CV":"0","Clicks":"5","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0337","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0337","ROI":"-1","Revenue":"0","Visits":"57"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0319","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0319","ROI":"-1","Revenue":"0","Visits":"57"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0232","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0232","ROI":"-1","Revenue":"0","Visits":"56"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0.057692","CV":"0","Clicks":"3","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0379","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0379","ROI":"-1","Revenue":"0","Visits":"52"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0285","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0285","ROI":"-1","Revenue":"0","Visits":"51"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0255","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0255","ROI":"-1","Revenue":"0","Visits":"50"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0237","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0237","ROI":"-1","Revenue":"0","Visits":"50"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0221","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0221","ROI":"-1","Revenue":"0","Visits":"50"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0313","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0313","ROI":"-1","Revenue":"0","Visits":"49"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0274","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0274","ROI":"-1","Revenue":"0","Visits":"49"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.021277","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0256","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0256","ROI":"-1","Revenue":"0","Visits":"47"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0226","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0226","ROI":"-1","Revenue":"0","Visits":"46"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.022727","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0191","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0191","ROI":"-1","Revenue":"0","Visits":"44"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0232","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0232","ROI":"-1","Revenue":"0","Visits":"44"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.046512","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0217","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0217","ROI":"-1","Revenue":"0","Visits":"43"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0211","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0211","ROI":"-1","Revenue":"0","Visits":"41"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0268","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0268","ROI":"-1","Revenue":"0","Visits":"38"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0184","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0184","ROI":"-1","Revenue":"0","Visits":"37"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.027778","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.015","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.015","ROI":"-1","Revenue":"0","Visits":"36"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.029412","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0171","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0171","ROI":"-1","Revenue":"0","Visits":"34"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0204","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0204","ROI":"-1","Revenue":"0","Visits":"34"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0178","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0178","ROI":"-1","Revenue":"0","Visits":"33"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0162","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0162","ROI":"-1","Revenue":"0","Visits":"33"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0296","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0296","ROI":"-1","Revenue":"0","Visits":"33"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0161","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0161","ROI":"-1","Revenue":"0","Visits":"32"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.0625","CV":"0","Clicks":"2","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.017","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.017","ROI":"-1","Revenue":"0","Visits":"32"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.03125","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0175","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0175","ROI":"-1","Revenue":"0","Visits":"32"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.0625","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0147","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0147","ROI":"-1","Revenue":"0","Visits":"32"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.0625","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0158","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0158","ROI":"-1","Revenue":"0","Visits":"32"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.064516","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0124","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0124","ROI":"-1","Revenue":"0","Visits":"31"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.032258","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0198","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0198","ROI":"-1","Revenue":"0","Visits":"31"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.333333","CV":"0","Clicks":"10","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0116","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0116","ROI":"-1","Revenue":"0","Visits":"30"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.033333","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0156","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0156","ROI":"-1","Revenue":"0","Visits":"30"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0124","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0124","ROI":"-1","Revenue":"0","Visits":"30"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0126","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0126","ROI":"-1","Revenue":"0","Visits":"30"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.068966","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0119","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0119","ROI":"-1","Revenue":"0","Visits":"29"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.178571","CV":"0","Clicks":"5","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0123","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0123","ROI":"-1","Revenue":"0","Visits":"28"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.178571","CV":"0","Clicks":"5","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0158","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0158","ROI":"-1","Revenue":"0","Visits":"28"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0188","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0188","ROI":"-1","Revenue":"0","Visits":"27"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.037037","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0139","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0139","ROI":"-1","Revenue":"0","Visits":"27"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0133","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0133","ROI":"-1","Revenue":"0","Visits":"27"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.037037","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0175","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0175","ROI":"-1","Revenue":"0","Visits":"27"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.076923","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0149","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0149","ROI":"-1","Revenue":"0","Visits":"26"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.038462","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0126","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0126","ROI":"-1","Revenue":"0","Visits":"26"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0129","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0129","ROI":"-1","Revenue":"0","Visits":"25"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.04","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0149","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0149","ROI":"-1","Revenue":"0","Visits":"25"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0105","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0105","ROI":"-1","Revenue":"0","Visits":"24"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0105","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0105","ROI":"-1","Revenue":"0","Visits":"24"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0082","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0082","ROI":"-1","Revenue":"0","Visits":"24"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0094","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0094","ROI":"-1","Revenue":"0","Visits":"24"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0129","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0129","ROI":"-1","Revenue":"0","Visits":"23"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.086957","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0149","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0149","ROI":"-1","Revenue":"0","Visits":"23"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.043478","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0128","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0128","ROI":"-1","Revenue":"0","Visits":"23"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0074","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0074","ROI":"-1","Revenue":"0","Visits":"22"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.045455","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0133","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0133","ROI":"-1","Revenue":"0","Visits":"22"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0088","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0088","ROI":"-1","Revenue":"0","Visits":"22"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0094","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0094","ROI":"-1","Revenue":"0","Visits":"22"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.045455","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0117","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0117","ROI":"-1","Revenue":"0","Visits":"22"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.090909","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0136","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0136","ROI":"-1","Revenue":"0","Visits":"22"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0098","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0098","ROI":"-1","Revenue":"0","Visits":"21"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.047619","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0093","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0093","ROI":"-1","Revenue":"0","Visits":"21"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0112","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0112","ROI":"-1","Revenue":"0","Visits":"21"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0075","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0075","ROI":"-1","Revenue":"0","Visits":"21"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.05","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0098","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0098","ROI":"-1","Revenue":"0","Visits":"20"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0074","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0074","ROI":"-1","Revenue":"0","Visits":"20"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.105263","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0072","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0072","ROI":"-1","Revenue":"0","Visits":"19"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0.210526","CV":"0","Clicks":"4","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0129","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0129","ROI":"-1","Revenue":"0","Visits":"19"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.105263","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0117","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0117","ROI":"-1","Revenue":"0","Visits":"19"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.052632","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0084","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0084","ROI":"-1","Revenue":"0","Visits":"19"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0093","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0093","ROI":"-1","Revenue":"0","Visits":"19"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0103","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0103","ROI":"-1","Revenue":"0","Visits":"19"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0081","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0081","ROI":"-1","Revenue":"0","Visits":"18"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0.111111","CV":"0","Clicks":"2","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0119","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0119","ROI":"-1","Revenue":"0","Visits":"18"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0104","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0104","ROI":"-1","Revenue":"0","Visits":"18"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.055556","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0079","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0079","ROI":"-1","Revenue":"0","Visits":"18"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0084","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0084","ROI":"-1","Revenue":"0","Visits":"18"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0083","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0083","ROI":"-1","Revenue":"0","Visits":"18"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0082","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0082","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0076","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0076","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.009","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.009","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.117647","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0091","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0091","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0083","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0083","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0076","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0076","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0086","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0086","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.117647","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0094","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0094","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0091","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0091","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0128","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0128","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0128","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0128","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0096","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0096","ROI":"-1","Revenue":"0","Visits":"17"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0075","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0075","ROI":"-1","Revenue":"0","Visits":"16"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0066","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0066","ROI":"-1","Revenue":"0","Visits":"16"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.008","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.008","ROI":"-1","Revenue":"0","Visits":"16"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0077","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0077","ROI":"-1","Revenue":"0","Visits":"16"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.1875","CV":"0","Clicks":"3","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0087","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0087","ROI":"-1","Revenue":"0","Visits":"16"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0088","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0088","ROI":"-1","Revenue":"0","Visits":"16"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0082","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0082","ROI":"-1","Revenue":"0","Visits":"16"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0062","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0062","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.266667","CV":"0","Clicks":"4","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0093","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0093","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.2","CV":"0","Clicks":"3","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0067","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0067","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0081","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0081","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.2","CV":"0","Clicks":"3","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0061","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0061","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.066667","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0072","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0072","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0094","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0094","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.133333","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0086","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0086","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0097","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0097","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.01","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.01","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0125","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0125","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0066","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0066","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0062","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0062","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.066667","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0076","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0076","ROI":"-1","Revenue":"0","Visits":"15"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0051","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0051","ROI":"-1","Revenue":"0","Visits":"14"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0.428571","CV":"0","Clicks":"6","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0145","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0145","ROI":"-1","Revenue":"0","Visits":"14"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0066","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0066","ROI":"-1","Revenue":"0","Visits":"14"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0071","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0071","ROI":"-1","Revenue":"0","Visits":"14"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0063","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0063","ROI":"-1","Revenue":"0","Visits":"14"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0059","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0059","ROI":"-1","Revenue":"0","Visits":"14"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0044","Country":"Bosnia And Herzegovina","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0044","ROI":"-1","Revenue":"0","Visits":"13"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.007","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.007","ROI":"-1","Revenue":"0","Visits":"13"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.153846","CV":"0","Clicks":"2","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0077","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0077","ROI":"-1","Revenue":"0","Visits":"13"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0087","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0087","ROI":"-1","Revenue":"0","Visits":"13"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0074","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0074","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0046","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0046","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0046","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0046","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0048","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0048","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.005","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.005","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0031","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0033","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0033","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0059","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0059","ROI":"-1","Revenue":"0","Visits":"12"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0046","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0046","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0044","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0044","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.090909","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.005","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.005","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0055","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0055","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0038","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0038","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.272727","CV":"0","Clicks":"3","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0039","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0039","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0.090909","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0077","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0077","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0068","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0068","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0064","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0064","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0053","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0053","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0123","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0123","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0.090909","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0038","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0038","ROI":"-1","Revenue":"0","Visits":"11"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0033","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0033","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0038","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0038","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0056","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0056","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0054","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0054","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0047","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0047","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0057","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0057","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.2","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0047","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0047","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.1","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0058","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0058","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0071","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0071","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.004","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.004","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0061","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0061","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0031","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0047","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0047","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0045","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0045","ROI":"-1","Revenue":"0","Visits":"10"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.111111","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0054","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0054","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.111111","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0042","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0042","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0029","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0029","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.111111","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0038","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0038","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.222222","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0046","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0046","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0035","Country":"Gabon","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0035","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0068","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0068","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0069","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0069","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0042","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0042","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0055","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0055","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0049","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0049","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0068","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0068","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.111111","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0053","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0053","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"9"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0.25","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0073","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0073","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0041","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0041","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.125","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0048","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0048","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0057","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0057","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0062","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0062","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0049","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0049","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0036","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0036","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0031","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.006","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.006","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.25","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0037","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0037","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0039","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0039","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0031","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0038","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0038","ROI":"-1","Revenue":"0","Visits":"8"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0023","Country":"Bosnia And Herzegovina","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0029","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0029","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0035","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0035","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0031","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0027","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0027","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0037","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0037","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0031","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0027","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0027","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0028","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0028","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0041","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0041","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.285714","CV":"0","Clicks":"2","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0042","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0042","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0042","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0042","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0037","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0037","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0024","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0024","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0007","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0025","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0035","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0035","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0037","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0037","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Rwanda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0022","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0031","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0035","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0035","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.142857","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0032","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0032","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.004","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.004","ROI":"-1","Revenue":"0","Visits":"7"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0022","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.166667","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0033","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0033","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.166667","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0024","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0024","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.5","CV":"0","Clicks":"3","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0024","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0024","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0025","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.002","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0023","Country":"Germany","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0042","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0042","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0039","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0039","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0026","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0026","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.166667","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0023","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0031","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0044","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0044","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0041","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0041","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.004","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.004","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0042","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0042","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0033","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0033","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0024","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0024","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.004","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.004","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0034","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0034","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0044","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0044","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0014","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0083","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0083","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0023","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.333333","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0037","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0037","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0029","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0029","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0039","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0039","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0033","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0033","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.004","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.004","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.166667","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0039","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0039","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0051","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0051","ROI":"-1","Revenue":"0","Visits":"6"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0.2","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0035","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0035","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0028","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0028","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0019","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0015","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0025","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0028","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0028","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0028","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0028","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0024","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0024","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0027","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0027","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0023","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0035","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0035","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0042","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0042","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.4","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0.4","CV":"0","Clicks":"2","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0041","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0041","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0017","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.2","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0024","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0024","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0022","Country":"Latvia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0022","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.2","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0026","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0026","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Netherlands","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.4","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"1.6","CV":"0","Clicks":"8","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.2","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0025","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0026","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0026","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0029","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0029","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.4","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0032","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0032","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.2","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0019","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0022","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0023","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0028","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0028","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.2","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0026","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0026","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0017","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.003","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0029","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0029","ROI":"-1","Revenue":"0","Visits":"5"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0033","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0033","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"23.25","CV":"0","Clicks":"93","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0022","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0035","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0035","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Georgia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0014","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0017","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0028","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0028","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.002","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.25","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0022","Country":"Kenya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.25","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0014","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0016","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0028","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0028","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0023","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0034","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0034","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0026","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0026","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0018","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.002","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"Nigeria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0019","Country":"Nigeria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"1.25","CV":"0","Clicks":"5","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0019","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0025","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0019","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Rwanda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0017","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0031","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0031","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0022","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0017","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0027","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0027","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0025","Country":"South Sudan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0014","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0043","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0043","ROI":"-1","Revenue":"0","Visits":"4"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0011","Country":"Bosnia And Herzegovina","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0012","Country":"Bosnia And Herzegovina","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.333333","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0017","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0009","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0026","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0026","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0012","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0013","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.002","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0012","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.333333","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0026","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0026","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0017","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Georgia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"Greece","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.666667","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0021","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"India","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.003","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.003","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.002","Country":"Iceland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.002","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"Kenya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0023","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0023","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Luxembourg","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0015","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0023","Country":"New Zealand","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0014","Country":"New Zealand","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.333333","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0032","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0032","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0017","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0.333333","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0017","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0037","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0037","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"1.333333","CV":"0","Clicks":"4","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0011","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0025","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Slovenia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0011","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0027","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0027","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0.333333","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.002","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.002","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.002","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0009","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"3"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0001","Country":"Brazil","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Brazil","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0007","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0007","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0013","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Falkland Islands (Malvinas)","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Falkland Islands (Malvinas)","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0016","Country":"Gabon","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Gabon","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Gabon","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Georgia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0009","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0016","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"India","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0023","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0014","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Jersey","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Jersey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Kuwait","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.001","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0014","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0027","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0027","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0025","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0025","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0018","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0018","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Latvia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0.5","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0019","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Montenegro","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Montenegro","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.001","Country":"Montenegro","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0011","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0016","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0023","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0017","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Panama","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Panama","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"1","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0023","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0023","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0013","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0017","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0034","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0034","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0014","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0029","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0029","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0021","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0021","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Saint Helena","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0007","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0011","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0009","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0016","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0016","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Uzbekistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Yemen","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0009","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"2"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"United Arab Emirates","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Albania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Austria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Austria","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Austria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Australia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0001","Country":"Australia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0001","Country":"Australia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0","Country":"Australia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Australia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Australia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Bosnia And Herzegovina","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Bosnia And Herzegovina","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0013","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0022","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0022","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0022","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0019","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0019","Country":"Bangladesh","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Belgium","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.001","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Bulgaria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Bahrain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Bahrain","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Bahrain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"Brazil","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"Brazil","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Canada","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Canada","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Canada","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Canada","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Democratic Republic of the Congo","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Democratic Republic of the Congo","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Switzerland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Côte D'Ivoire","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"China","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"0","ROI":"0","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"2","CV":"0","Clicks":"2","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Cape Verde","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Cyprus","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Czech Republic","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Czech Republic","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Czech Republic","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Czech Republic","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Denmark","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Estonia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Egypt","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0001","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Spain","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Finland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Finland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Finland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Finland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Finland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Falkland Islands (Malvinas)","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Falkland Islands (Malvinas)","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Falkland Islands (Malvinas)","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"France","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Gabon","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"1","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.001","Country":"Gabon","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Georgia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0014","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Georgia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Guernsey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0015","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Greece","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Greece","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Greece","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Greece","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Hong Kong","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Croatia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Indonesia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Ireland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Israel","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0009","Country":"India","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0013","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"India","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"India","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"India","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Iraq","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0012","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"1","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Iran","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Iceland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0019","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0019","Country":"Iceland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0019","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Italy","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"1","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Jersey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Jersey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Jersey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Jersey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Jersey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Jordan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Japan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"Japan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Japan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Japan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Japan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0015","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Japan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Kenya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Kenya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Kenya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Kyrgyzstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"South Korea","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"South Korea","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Kuwait","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Kuwait","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Kuwait","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Kazakhstan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.001","Country":"Sri Lanka","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"1","CV":"0","Clicks":"1","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Liberia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Lithuania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"45","CV":"0","Clicks":"45","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Luxembourg","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Luxembourg","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Latvia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Latvia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Latvia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Latvia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Libya","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Montenegro","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Montenegro","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Montenegro","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Montenegro","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Mali","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Macao","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Mauritius","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"2","CV":"0","Clicks":"2","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Maldives","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Malaysia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Niger","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Niger","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Nigeria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Nigeria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Nigeria","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Nigeria","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0001","Country":"Norway","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Nepal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0014","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"New Zealand","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"New Zealand","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"New Zealand","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0017","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0017","Country":"New Zealand","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0017","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0014","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0014","Country":"Oman","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0014","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Panama","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Panama","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Panama","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Peru","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0009","Country":"Peru","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Philippines","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Philippines","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Philippines","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Pakistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0001","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Poland","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"2","CV":"0","Clicks":"2","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0001","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"3","CV":"0","Clicks":"3","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0001","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0006","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0001","Country":"Palestine","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Portugal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Qatar","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0007","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0015","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Romania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0011","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0011","Country":"Russian Federation","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0011","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0008","Country":"Saudi Arabia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0015","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0015","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0015","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Seychelles","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO (INDEX)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Sweden","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Sweden","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Sweden","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Sweden","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0013","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0013","Country":"Sweden","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0013","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0001","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"Singapore","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Saint Helena","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Saint Helena","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Saint Helena","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Slovenia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Slovenia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Senegal","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"South Sudan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"South Sudan","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO FREE TOKENS","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"South Sudan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Chad","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Thailand","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Tunisia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"1","CV":"0","Clicks":"1","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0009","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0009","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0009","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0001","Country":"Turkey","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"Tanzania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Tanzania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Tanzania","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0007","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO Land variation","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 3  BADOO (pop)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0006","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0006","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL POP 4  BADOO (pop)","Profit":"-0.0006","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - BADOO TOP ROOM","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0007","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Ukraine","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0004","Country":"Uganda","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0","Country":"United States","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"clickdealer - Global - (49890) [WEB+MOB] CindyMatches - SOI - US/UK/CA/AU/NZ/IE","Profit":"0","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Uzbekistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.001","Country":"Uzbekistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0012","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0012","Country":"Uzbekistan","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0012","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0005","Country":"Yemen","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chat bear)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"Yemen","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Yemen","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0003","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0008","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0008","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (B/W jumper_2)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0008","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0005","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0005","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0005","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"South Africa","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"600","Conversions":"0","Conversions as Counted for Conversion Cap":"0","Cost":"0.0002","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"United Kingdom - ||AV|| [UK] [MOB-TAB-WEB] [950] - Second Fling | DOI | UK (uk-mob)","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0002","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0002","Country":"Zambia","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0002","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (red alert)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0003","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0003","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (chris on the bottom)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0003","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"Direct linking","Offer":"Global - CPL SMARTLINK BADOO","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.001","CR":"0","CTR":"8","CV":"0","Clicks":"8","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.001","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (English tea)","Offer":"Global - CD - [UK] [AU] [NZ] [WEB+MOB] [53069] WHITECHRISTIANHATE","Profit":"-0.001","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0007","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0007","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (lollipop)","Offer":"Global - ||AV || [US, UK, CA, AU] [TAB+MOB] || Spdate | SOI ","Profit":"-0.0007","ROI":"-1","Revenue":"0","Visits":"1"},{"AP":"0","CPV":"0.0004","CR":"0","CTR":"0","CV":"0","Clicks":"0","Conversion Cap":"","Conversions":"0","Conversions as Counted for Conversion Cap":"","Cost":"0.0004","Country":"Zimbabwe","EPC":"0","EPV":"0","Errors":"0","Lander":"United Kingdom - MOB - (jumper_1)","Offer":"United Kingdom - CD - [MOB] [56421] CHEEKYLOVERS /UK SOI quarter","Profit":"-0.0004","ROI":"-1","Revenue":"0","Visits":"1"}];
 
 /***/ }),
-/* 62 */
+/* 69 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(0);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(2);
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _axios = __webpack_require__(70);
+
+var _axios2 = _interopRequireDefault(_axios);
+
+var _TreeView = __webpack_require__(90);
+
+var _TreeView2 = _interopRequireDefault(_TreeView);
+
+var _api = __webpack_require__(92);
+
+var API = _interopRequireWildcard(_api);
+
+__webpack_require__(93);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Companies = function (_Component) {
+  _inherits(Companies, _Component);
+
+  function Companies(props) {
+    _classCallCheck(this, Companies);
+
+    var _this = _possibleConstructorReturn(this, (Companies.__proto__ || Object.getPrototypeOf(Companies)).call(this, props));
+
+    _this.VIEW_TYPE_TREE = 'VIEW_TYPE_TREE';
+    _this.VIEW_TYPE_TABLE = 'VIEW_TYPE_TABLE';
+    _this.VIEW_TYPE_DEFAULT = _this.VIEW_TYPE_TABLE;
+
+
+    _this.state = {
+      companies: [],
+      dataByCompany: {},
+      flatCompaniesData: []
+    };
+
+    if (_this.props.viewType === undefined) {
+      _this.state.viewType = _this.VIEW_TYPE_DEFAULT;
+    } else if (_this.props.viewType === "table") {
+      _this.state.viewType = _this.VIEW_TYPE_TABLE;
+    } else if (_this.props.viewType === "tree") {
+      _this.state.viewType = _this.VIEW_TYPE_TREE;
+    }
+
+    _this.loadCompanies();
+
+    return _this;
+  }
+
+  _createClass(Companies, [{
+    key: 'loadCompanies',
+    value: function loadCompanies() {
+      // axios.get(API.COMPANY_LIST)
+      //   .then(function (response) {
+      //     console.log(response);
+      //   })
+      //   .catch(function (error) {
+      //     console.log(error);
+      //   });
+      // axios.create({
+      //   baseURL: 'API.COMPANY_LIST',
+      //   timeout: 10000,
+      //   withCredentials: true,
+      //   transformRequest: [(data) => JSON.stringify(data.data)],
+      //   headers: {
+      //     'Accept': 'application/json',
+      //     'Content-Type': 'application/json',
+      //   }
+      // });
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+
+      return _react2.default.createElement(
+        'div',
+        { className: 'companies' },
+        _react2.default.createElement(
+          'div',
+          { className: 'companies__viewType' },
+          _react2.default.createElement(
+            'div',
+            {
+              className: 'companies__viewType'
+            },
+            'table'
+          ),
+          _react2.default.createElement(
+            'div',
+            {
+              className: 'companies__viewType'
+            },
+            'tree'
+          )
+        ),
+        _react2.default.createElement(_TreeView2.default, {
+          companies: this.state.companies,
+          dataByCompany: this.state.dataByCompany
+        })
+      );
+    }
+  }]);
+
+  return Companies;
+}(_react.Component);
+
+exports.default = Companies;
+
+
+Companies.propTypes = {};
+
+/***/ }),
+/* 70 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(71);
+
+/***/ }),
+/* 71 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+var bind = __webpack_require__(19);
+var Axios = __webpack_require__(73);
+var defaults = __webpack_require__(7);
+
+/**
+ * Create an instance of Axios
+ *
+ * @param {Object} defaultConfig The default config for the instance
+ * @return {Axios} A new instance of Axios
+ */
+function createInstance(defaultConfig) {
+  var context = new Axios(defaultConfig);
+  var instance = bind(Axios.prototype.request, context);
+
+  // Copy axios.prototype to instance
+  utils.extend(instance, Axios.prototype, context);
+
+  // Copy context to instance
+  utils.extend(instance, context);
+
+  return instance;
+}
+
+// Create the default instance to be exported
+var axios = createInstance(defaults);
+
+// Expose Axios class to allow class inheritance
+axios.Axios = Axios;
+
+// Factory for creating new instances
+axios.create = function create(instanceConfig) {
+  return createInstance(utils.merge(defaults, instanceConfig));
+};
+
+// Expose Cancel & CancelToken
+axios.Cancel = __webpack_require__(23);
+axios.CancelToken = __webpack_require__(88);
+axios.isCancel = __webpack_require__(22);
+
+// Expose all/spread
+axios.all = function all(promises) {
+  return Promise.all(promises);
+};
+axios.spread = __webpack_require__(89);
+
+module.exports = axios;
+
+// Allow use of default import syntax in TypeScript
+module.exports.default = axios;
+
+
+/***/ }),
+/* 72 */
+/***/ (function(module, exports) {
+
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+// The _isBuffer check is for Safari 5-7 support, because it's missing
+// Object.prototype.constructor. Remove this eventually
+module.exports = function (obj) {
+  return obj != null && (isBuffer(obj) || isSlowBuffer(obj) || !!obj._isBuffer)
+}
+
+function isBuffer (obj) {
+  return !!obj.constructor && typeof obj.constructor.isBuffer === 'function' && obj.constructor.isBuffer(obj)
+}
+
+// For Node v0.10 support. Remove this eventually.
+function isSlowBuffer (obj) {
+  return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
+}
+
+
+/***/ }),
+/* 73 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var defaults = __webpack_require__(7);
+var utils = __webpack_require__(1);
+var InterceptorManager = __webpack_require__(83);
+var dispatchRequest = __webpack_require__(84);
+
+/**
+ * Create a new instance of Axios
+ *
+ * @param {Object} instanceConfig The default config for the instance
+ */
+function Axios(instanceConfig) {
+  this.defaults = instanceConfig;
+  this.interceptors = {
+    request: new InterceptorManager(),
+    response: new InterceptorManager()
+  };
+}
+
+/**
+ * Dispatch a request
+ *
+ * @param {Object} config The config specific for this request (merged with this.defaults)
+ */
+Axios.prototype.request = function request(config) {
+  /*eslint no-param-reassign:0*/
+  // Allow for axios('example/url'[, config]) a la fetch API
+  if (typeof config === 'string') {
+    config = utils.merge({
+      url: arguments[0]
+    }, arguments[1]);
+  }
+
+  config = utils.merge(defaults, {method: 'get'}, this.defaults, config);
+  config.method = config.method.toLowerCase();
+
+  // Hook up interceptors middleware
+  var chain = [dispatchRequest, undefined];
+  var promise = Promise.resolve(config);
+
+  this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
+    chain.unshift(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
+    chain.push(interceptor.fulfilled, interceptor.rejected);
+  });
+
+  while (chain.length) {
+    promise = promise.then(chain.shift(), chain.shift());
+  }
+
+  return promise;
+};
+
+// Provide aliases for supported request methods
+utils.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url
+    }));
+  };
+});
+
+utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  /*eslint func-names:0*/
+  Axios.prototype[method] = function(url, data, config) {
+    return this.request(utils.merge(config || {}, {
+      method: method,
+      url: url,
+      data: data
+    }));
+  };
+});
+
+module.exports = Axios;
+
+
+/***/ }),
+/* 74 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+/* 75 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+
+module.exports = function normalizeHeaderName(headers, normalizedName) {
+  utils.forEach(headers, function processHeader(value, name) {
+    if (name !== normalizedName && name.toUpperCase() === normalizedName.toUpperCase()) {
+      headers[normalizedName] = value;
+      delete headers[name];
+    }
+  });
+};
+
+
+/***/ }),
+/* 76 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var createError = __webpack_require__(21);
+
+/**
+ * Resolve or reject a Promise based on response status.
+ *
+ * @param {Function} resolve A function that resolves the promise.
+ * @param {Function} reject A function that rejects the promise.
+ * @param {object} response The response.
+ */
+module.exports = function settle(resolve, reject, response) {
+  var validateStatus = response.config.validateStatus;
+  // Note: status is not exposed by XDomainRequest
+  if (!response.status || !validateStatus || validateStatus(response.status)) {
+    resolve(response);
+  } else {
+    reject(createError(
+      'Request failed with status code ' + response.status,
+      response.config,
+      null,
+      response.request,
+      response
+    ));
+  }
+};
+
+
+/***/ }),
+/* 77 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Update an Error with the specified config, error code, and response.
+ *
+ * @param {Error} error The error to update.
+ * @param {Object} config The config.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ * @returns {Error} The error.
+ */
+module.exports = function enhanceError(error, config, code, request, response) {
+  error.config = config;
+  if (code) {
+    error.code = code;
+  }
+  error.request = request;
+  error.response = response;
+  return error;
+};
+
+
+/***/ }),
+/* 78 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+
+function encode(val) {
+  return encodeURIComponent(val).
+    replace(/%40/gi, '@').
+    replace(/%3A/gi, ':').
+    replace(/%24/g, '$').
+    replace(/%2C/gi, ',').
+    replace(/%20/g, '+').
+    replace(/%5B/gi, '[').
+    replace(/%5D/gi, ']');
+}
+
+/**
+ * Build a URL by appending params to the end
+ *
+ * @param {string} url The base of the url (e.g., http://www.google.com)
+ * @param {object} [params] The params to be appended
+ * @returns {string} The formatted url
+ */
+module.exports = function buildURL(url, params, paramsSerializer) {
+  /*eslint no-param-reassign:0*/
+  if (!params) {
+    return url;
+  }
+
+  var serializedParams;
+  if (paramsSerializer) {
+    serializedParams = paramsSerializer(params);
+  } else if (utils.isURLSearchParams(params)) {
+    serializedParams = params.toString();
+  } else {
+    var parts = [];
+
+    utils.forEach(params, function serialize(val, key) {
+      if (val === null || typeof val === 'undefined') {
+        return;
+      }
+
+      if (utils.isArray(val)) {
+        key = key + '[]';
+      } else {
+        val = [val];
+      }
+
+      utils.forEach(val, function parseValue(v) {
+        if (utils.isDate(v)) {
+          v = v.toISOString();
+        } else if (utils.isObject(v)) {
+          v = JSON.stringify(v);
+        }
+        parts.push(encode(key) + '=' + encode(v));
+      });
+    });
+
+    serializedParams = parts.join('&');
+  }
+
+  if (serializedParams) {
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
+  }
+
+  return url;
+};
+
+
+/***/ }),
+/* 79 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+
+// Headers whose duplicates are ignored by node
+// c.f. https://nodejs.org/api/http.html#http_message_headers
+var ignoreDuplicateOf = [
+  'age', 'authorization', 'content-length', 'content-type', 'etag',
+  'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
+  'last-modified', 'location', 'max-forwards', 'proxy-authorization',
+  'referer', 'retry-after', 'user-agent'
+];
+
+/**
+ * Parse headers into an object
+ *
+ * ```
+ * Date: Wed, 27 Aug 2014 08:58:49 GMT
+ * Content-Type: application/json
+ * Connection: keep-alive
+ * Transfer-Encoding: chunked
+ * ```
+ *
+ * @param {String} headers Headers needing to be parsed
+ * @returns {Object} Headers parsed into an object
+ */
+module.exports = function parseHeaders(headers) {
+  var parsed = {};
+  var key;
+  var val;
+  var i;
+
+  if (!headers) { return parsed; }
+
+  utils.forEach(headers.split('\n'), function parser(line) {
+    i = line.indexOf(':');
+    key = utils.trim(line.substr(0, i)).toLowerCase();
+    val = utils.trim(line.substr(i + 1));
+
+    if (key) {
+      if (parsed[key] && ignoreDuplicateOf.indexOf(key) >= 0) {
+        return;
+      }
+      if (key === 'set-cookie') {
+        parsed[key] = (parsed[key] ? parsed[key] : []).concat([val]);
+      } else {
+        parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
+      }
+    }
+  });
+
+  return parsed;
+};
+
+
+/***/ }),
+/* 80 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs have full support of the APIs needed to test
+  // whether the request URL is of the same origin as current location.
+  (function standardBrowserEnv() {
+    var msie = /(msie|trident)/i.test(navigator.userAgent);
+    var urlParsingNode = document.createElement('a');
+    var originURL;
+
+    /**
+    * Parse a URL to discover it's components
+    *
+    * @param {String} url The URL to be parsed
+    * @returns {Object}
+    */
+    function resolveURL(url) {
+      var href = url;
+
+      if (msie) {
+        // IE needs attribute set twice to normalize properties
+        urlParsingNode.setAttribute('href', href);
+        href = urlParsingNode.href;
+      }
+
+      urlParsingNode.setAttribute('href', href);
+
+      // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
+      return {
+        href: urlParsingNode.href,
+        protocol: urlParsingNode.protocol ? urlParsingNode.protocol.replace(/:$/, '') : '',
+        host: urlParsingNode.host,
+        search: urlParsingNode.search ? urlParsingNode.search.replace(/^\?/, '') : '',
+        hash: urlParsingNode.hash ? urlParsingNode.hash.replace(/^#/, '') : '',
+        hostname: urlParsingNode.hostname,
+        port: urlParsingNode.port,
+        pathname: (urlParsingNode.pathname.charAt(0) === '/') ?
+                  urlParsingNode.pathname :
+                  '/' + urlParsingNode.pathname
+      };
+    }
+
+    originURL = resolveURL(window.location.href);
+
+    /**
+    * Determine if a URL shares the same origin as the current location
+    *
+    * @param {String} requestURL The URL to test
+    * @returns {boolean} True if URL shares the same origin, otherwise false
+    */
+    return function isURLSameOrigin(requestURL) {
+      var parsed = (utils.isString(requestURL)) ? resolveURL(requestURL) : requestURL;
+      return (parsed.protocol === originURL.protocol &&
+            parsed.host === originURL.host);
+    };
+  })() :
+
+  // Non standard browser envs (web workers, react-native) lack needed support.
+  (function nonStandardBrowserEnv() {
+    return function isURLSameOrigin() {
+      return true;
+    };
+  })()
+);
+
+
+/***/ }),
+/* 81 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// btoa polyfill for IE<10 courtesy https://github.com/davidchambers/Base64.js
+
+var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+function E() {
+  this.message = 'String contains an invalid character';
+}
+E.prototype = new Error;
+E.prototype.code = 5;
+E.prototype.name = 'InvalidCharacterError';
+
+function btoa(input) {
+  var str = String(input);
+  var output = '';
+  for (
+    // initialize result and counter
+    var block, charCode, idx = 0, map = chars;
+    // if the next str index does not exist:
+    //   change the mapping table to "="
+    //   check if d has no fractional digits
+    str.charAt(idx | 0) || (map = '=', idx % 1);
+    // "8 - idx % 1 * 8" generates the sequence 2, 4, 6, 8
+    output += map.charAt(63 & block >> 8 - idx % 1 * 8)
+  ) {
+    charCode = str.charCodeAt(idx += 3 / 4);
+    if (charCode > 0xFF) {
+      throw new E();
+    }
+    block = block << 8 | charCode;
+  }
+  return output;
+}
+
+module.exports = btoa;
+
+
+/***/ }),
+/* 82 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+
+module.exports = (
+  utils.isStandardBrowserEnv() ?
+
+  // Standard browser envs support document.cookie
+  (function standardBrowserEnv() {
+    return {
+      write: function write(name, value, expires, path, domain, secure) {
+        var cookie = [];
+        cookie.push(name + '=' + encodeURIComponent(value));
+
+        if (utils.isNumber(expires)) {
+          cookie.push('expires=' + new Date(expires).toGMTString());
+        }
+
+        if (utils.isString(path)) {
+          cookie.push('path=' + path);
+        }
+
+        if (utils.isString(domain)) {
+          cookie.push('domain=' + domain);
+        }
+
+        if (secure === true) {
+          cookie.push('secure');
+        }
+
+        document.cookie = cookie.join('; ');
+      },
+
+      read: function read(name) {
+        var match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+        return (match ? decodeURIComponent(match[3]) : null);
+      },
+
+      remove: function remove(name) {
+        this.write(name, '', Date.now() - 86400000);
+      }
+    };
+  })() :
+
+  // Non standard browser env (web workers, react-native) lack needed support.
+  (function nonStandardBrowserEnv() {
+    return {
+      write: function write() {},
+      read: function read() { return null; },
+      remove: function remove() {}
+    };
+  })()
+);
+
+
+/***/ }),
+/* 83 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+
+function InterceptorManager() {
+  this.handlers = [];
+}
+
+/**
+ * Add a new interceptor to the stack
+ *
+ * @param {Function} fulfilled The function to handle `then` for a `Promise`
+ * @param {Function} rejected The function to handle `reject` for a `Promise`
+ *
+ * @return {Number} An ID used to remove interceptor later
+ */
+InterceptorManager.prototype.use = function use(fulfilled, rejected) {
+  this.handlers.push({
+    fulfilled: fulfilled,
+    rejected: rejected
+  });
+  return this.handlers.length - 1;
+};
+
+/**
+ * Remove an interceptor from the stack
+ *
+ * @param {Number} id The ID that was returned by `use`
+ */
+InterceptorManager.prototype.eject = function eject(id) {
+  if (this.handlers[id]) {
+    this.handlers[id] = null;
+  }
+};
+
+/**
+ * Iterate over all the registered interceptors
+ *
+ * This method is particularly useful for skipping over any
+ * interceptors that may have become `null` calling `eject`.
+ *
+ * @param {Function} fn The function to call for each interceptor
+ */
+InterceptorManager.prototype.forEach = function forEach(fn) {
+  utils.forEach(this.handlers, function forEachHandler(h) {
+    if (h !== null) {
+      fn(h);
+    }
+  });
+};
+
+module.exports = InterceptorManager;
+
+
+/***/ }),
+/* 84 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+var transformData = __webpack_require__(85);
+var isCancel = __webpack_require__(22);
+var defaults = __webpack_require__(7);
+var isAbsoluteURL = __webpack_require__(86);
+var combineURLs = __webpack_require__(87);
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+function throwIfCancellationRequested(config) {
+  if (config.cancelToken) {
+    config.cancelToken.throwIfRequested();
+  }
+}
+
+/**
+ * Dispatch a request to the server using the configured adapter.
+ *
+ * @param {object} config The config that is to be used for the request
+ * @returns {Promise} The Promise to be fulfilled
+ */
+module.exports = function dispatchRequest(config) {
+  throwIfCancellationRequested(config);
+
+  // Support baseURL config
+  if (config.baseURL && !isAbsoluteURL(config.url)) {
+    config.url = combineURLs(config.baseURL, config.url);
+  }
+
+  // Ensure headers exist
+  config.headers = config.headers || {};
+
+  // Transform request data
+  config.data = transformData(
+    config.data,
+    config.headers,
+    config.transformRequest
+  );
+
+  // Flatten headers
+  config.headers = utils.merge(
+    config.headers.common || {},
+    config.headers[config.method] || {},
+    config.headers || {}
+  );
+
+  utils.forEach(
+    ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
+    function cleanHeaderConfig(method) {
+      delete config.headers[method];
+    }
+  );
+
+  var adapter = config.adapter || defaults.adapter;
+
+  return adapter(config).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config);
+
+    // Transform response data
+    response.data = transformData(
+      response.data,
+      response.headers,
+      config.transformResponse
+    );
+
+    return response;
+  }, function onAdapterRejection(reason) {
+    if (!isCancel(reason)) {
+      throwIfCancellationRequested(config);
+
+      // Transform response data
+      if (reason && reason.response) {
+        reason.response.data = transformData(
+          reason.response.data,
+          reason.response.headers,
+          config.transformResponse
+        );
+      }
+    }
+
+    return Promise.reject(reason);
+  });
+};
+
+
+/***/ }),
+/* 85 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var utils = __webpack_require__(1);
+
+/**
+ * Transform the data for a request or a response
+ *
+ * @param {Object|String} data The data to be transformed
+ * @param {Array} headers The headers for the request or response
+ * @param {Array|Function} fns A single function or Array of functions
+ * @returns {*} The resulting transformed data
+ */
+module.exports = function transformData(data, headers, fns) {
+  /*eslint no-param-reassign:0*/
+  utils.forEach(fns, function transform(fn) {
+    data = fn(data, headers);
+  });
+
+  return data;
+};
+
+
+/***/ }),
+/* 86 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Determines whether the specified URL is absolute
+ *
+ * @param {string} url The URL to test
+ * @returns {boolean} True if the specified URL is absolute, otherwise false
+ */
+module.exports = function isAbsoluteURL(url) {
+  // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
+  // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
+  // by any combination of letters, digits, plus, period, or hyphen.
+  return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
+};
+
+
+/***/ }),
+/* 87 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Creates a new URL by combining the specified URLs
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} relativeURL The relative URL
+ * @returns {string} The combined URL
+ */
+module.exports = function combineURLs(baseURL, relativeURL) {
+  return relativeURL
+    ? baseURL.replace(/\/+$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+    : baseURL;
+};
+
+
+/***/ }),
+/* 88 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var Cancel = __webpack_require__(23);
+
+/**
+ * A `CancelToken` is an object that can be used to request cancellation of an operation.
+ *
+ * @class
+ * @param {Function} executor The executor function.
+ */
+function CancelToken(executor) {
+  if (typeof executor !== 'function') {
+    throw new TypeError('executor must be a function.');
+  }
+
+  var resolvePromise;
+  this.promise = new Promise(function promiseExecutor(resolve) {
+    resolvePromise = resolve;
+  });
+
+  var token = this;
+  executor(function cancel(message) {
+    if (token.reason) {
+      // Cancellation has already been requested
+      return;
+    }
+
+    token.reason = new Cancel(message);
+    resolvePromise(token.reason);
+  });
+}
+
+/**
+ * Throws a `Cancel` if cancellation has been requested.
+ */
+CancelToken.prototype.throwIfRequested = function throwIfRequested() {
+  if (this.reason) {
+    throw this.reason;
+  }
+};
+
+/**
+ * Returns an object that contains a new `CancelToken` and a function that, when called,
+ * cancels the `CancelToken`.
+ */
+CancelToken.source = function source() {
+  var cancel;
+  var token = new CancelToken(function executor(c) {
+    cancel = c;
+  });
+  return {
+    token: token,
+    cancel: cancel
+  };
+};
+
+module.exports = CancelToken;
+
+
+/***/ }),
+/* 89 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * Syntactic sugar for invoking a function and expanding an array for arguments.
+ *
+ * Common use case would be to use `Function.prototype.apply`.
+ *
+ *  ```js
+ *  function f(x, y, z) {}
+ *  var args = [1, 2, 3];
+ *  f.apply(null, args);
+ *  ```
+ *
+ * With `spread` this example can be re-written.
+ *
+ *  ```js
+ *  spread(function(x, y, z) {})([1, 2, 3]);
+ *  ```
+ *
+ * @param {Function} callback
+ * @returns {Function}
+ */
+module.exports = function spread(callback) {
+  return function wrap(arr) {
+    return callback.apply(null, arr);
+  };
+};
+
+
+/***/ }),
+/* 90 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(0);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(2);
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+__webpack_require__(91);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var TreeView = function (_Component) {
+  _inherits(TreeView, _Component);
+
+  function TreeView() {
+    _classCallCheck(this, TreeView);
+
+    return _possibleConstructorReturn(this, (TreeView.__proto__ || Object.getPrototypeOf(TreeView)).apply(this, arguments));
+  }
+
+  _createClass(TreeView, [{
+    key: 'render',
+    value: function render() {
+      var companies = this.props.companies;
+
+
+      console.log('render companiess ' + companies);
+
+      return _react2.default.createElement('div', { className: '' });
+    }
+  }]);
+
+  return TreeView;
+}(_react.Component);
+
+exports.default = TreeView;
+
+
+TreeView.propTypes = {
+  companies: _propTypes2.default.array.isRequired,
+  dataByCompany: _propTypes2.default.object
+};
+
+/***/ }),
+/* 91 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 63 */
+/* 92 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var COMPANY_LIST = exports.COMPANY_LIST = "api/company/list";
+var COMPANY_VIEW = exports.COMPANY_VIEW = "api/company/view";
+
+/***/ }),
+/* 93 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 64 */
+/* 94 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 95 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22987,7 +24975,7 @@ var companyDataHeaders = exports.companyDataHeaders = [{
 }];
 
 /***/ }),
-/* 65 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23005,23 +24993,23 @@ var _react = __webpack_require__(0);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _propTypes = __webpack_require__(1);
+var _propTypes = __webpack_require__(2);
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _THead = __webpack_require__(66);
+var _THead = __webpack_require__(98);
 
 var _THead2 = _interopRequireDefault(_THead);
 
-var _TBody = __webpack_require__(68);
+var _TBody = __webpack_require__(100);
 
 var _TBody2 = _interopRequireDefault(_TBody);
 
-var _THiddenClms = __webpack_require__(83);
+var _THiddenClms = __webpack_require__(104);
 
 var _THiddenClms2 = _interopRequireDefault(_THiddenClms);
 
-__webpack_require__(72);
+__webpack_require__(106);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -23224,27 +25212,23 @@ var Table = function (_Component) {
           onClmShow: this.showClm
         }),
         _react2.default.createElement(
-          'div',
-          { className: 'table-drag-zone' },
-          _react2.default.createElement(
-            'table',
-            { className: 'table' },
-            _react2.default.createElement(_THead2.default, {
-              headers: this.state.headers,
-              filters: this.state.filters,
-              orderOfClms: this.state.orderOfClms,
-              onChangeFilter: this.changeFilter,
-              onOrderOfClmChange: this.changeOrderOfClm,
-              onClmHide: this.hideClm,
-              onClmMove: this.moveClm
-            }),
-            _react2.default.createElement(_TBody2.default, {
-              headers: this.state.headers,
-              clmsTypes: this.clmsTypes,
-              filters: this.state.filters,
-              data: this.state.data
-            })
-          )
+          'table',
+          { className: 'table' },
+          _react2.default.createElement(_THead2.default, {
+            headers: this.state.headers,
+            filters: this.state.filters,
+            orderOfClms: this.state.orderOfClms,
+            onChangeFilter: this.changeFilter,
+            onOrderOfClmChange: this.changeOrderOfClm,
+            onClmHide: this.hideClm,
+            onClmMove: this.moveClm
+          }),
+          _react2.default.createElement(_TBody2.default, {
+            headers: this.state.headers,
+            clmsTypes: this.clmsTypes,
+            filters: this.state.filters,
+            data: this.state.data
+          })
         )
       );
     }
@@ -23262,7 +25246,7 @@ Table.propTypes = {
 };
 
 /***/ }),
-/* 66 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23278,11 +25262,11 @@ var _react = __webpack_require__(0);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _propTypes = __webpack_require__(1);
+var _propTypes = __webpack_require__(2);
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-__webpack_require__(67);
+__webpack_require__(99);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -23513,13 +25497,13 @@ THead.propTypes = {
 };
 
 /***/ }),
-/* 67 */
+/* 99 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 68 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23535,15 +25519,15 @@ var _react = __webpack_require__(0);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _propTypes = __webpack_require__(1);
+var _propTypes = __webpack_require__(2);
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _TBodyRow = __webpack_require__(69);
+var _TBodyRow = __webpack_require__(101);
 
 var _TBodyRow2 = _interopRequireDefault(_TBodyRow);
 
-__webpack_require__(71);
+__webpack_require__(103);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -23625,7 +25609,7 @@ TBody.propTypes = {
 };
 
 /***/ }),
-/* 69 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23641,11 +25625,11 @@ var _react = __webpack_require__(0);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _propTypes = __webpack_require__(1);
+var _propTypes = __webpack_require__(2);
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _TBodyCell = __webpack_require__(70);
+var _TBodyCell = __webpack_require__(102);
 
 var _TBodyCell2 = _interopRequireDefault(_TBodyCell);
 
@@ -23713,7 +25697,7 @@ TBodyRow.propTypes = {
 };
 
 /***/ }),
-/* 70 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23729,7 +25713,7 @@ var _react = __webpack_require__(0);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _propTypes = __webpack_require__(1);
+var _propTypes = __webpack_require__(2);
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
@@ -23797,28 +25781,140 @@ TBodyCell.propTypes = {
 };
 
 /***/ }),
-/* 71 */
+/* 103 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 72 */
+/* 104 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(0);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(2);
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+__webpack_require__(105);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var THiddenClms = function (_PureComponent) {
+  _inherits(THiddenClms, _PureComponent);
+
+  function THiddenClms() {
+    var _ref;
+
+    var _temp, _this, _ret;
+
+    _classCallCheck(this, THiddenClms);
+
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = THiddenClms.__proto__ || Object.getPrototypeOf(THiddenClms)).call.apply(_ref, [this].concat(args))), _this), _this.clmShow = function (clmName) {
+      return function (e) {
+        _this.props.onClmShow(clmName);
+      };
+    }, _temp), _possibleConstructorReturn(_this, _ret);
+  }
+
+  _createClass(THiddenClms, [{
+    key: 'render',
+    value: function render() {
+      var headers = this.props.headers;
+
+
+      var hiddenClms = [];
+
+      for (var i = 0; i < headers.length; i++) {
+        if (!headers[i].visible) {
+          var item = _react2.default.createElement(
+            'div',
+            { className: 'tHiddenClms__item', key: headers[i].name },
+            headers[i].label,
+            _react2.default.createElement('i', {
+              className: 'fa fa-eye tHiddenClms__show',
+              onClick: this.clmShow(headers[i].name)
+            })
+          );
+
+          hiddenClms.push(item);
+        }
+      }
+
+      var visibleClass = "";
+      if (hiddenClms.length > 0) {
+        visibleClass = "tHiddenClms_visible";
+      } else {
+        hiddenClms = _react2.default.createElement(
+          'div',
+          { className: 'tHiddenClms__allVisible' },
+          '(All columns are visible)'
+        );
+      }
+
+      return _react2.default.createElement(
+        'div',
+        { className: 'tHiddenClms ' + visibleClass },
+        _react2.default.createElement(
+          'div',
+          { className: 'tHiddenClms__text' },
+          'Hidden columns:'
+        ),
+        _react2.default.createElement(
+          'div',
+          { className: 'tHiddenClms__items' },
+          hiddenClms
+        )
+      );
+    }
+  }]);
+
+  return THiddenClms;
+}(_react.PureComponent);
+
+exports.default = THiddenClms;
+
+
+THiddenClms.propTypes = {
+  headers: _propTypes2.default.array.isRequired,
+  onClmShow: _propTypes2.default.func.isRequired
+};
+
+/***/ }),
+/* 105 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 73 */,
-/* 74 */,
-/* 75 */,
-/* 76 */,
-/* 77 */,
-/* 78 */,
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */
+/* 106 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23891,127 +25987,6 @@ var tableData = exports.tableData = [{
   "Revenue": "82.8",
   "Visits": "111212"
 }];
-
-/***/ }),
-/* 83 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = __webpack_require__(0);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _propTypes = __webpack_require__(1);
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-__webpack_require__(84);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var THiddenClms = function (_PureComponent) {
-  _inherits(THiddenClms, _PureComponent);
-
-  function THiddenClms() {
-    var _ref;
-
-    var _temp, _this, _ret;
-
-    _classCallCheck(this, THiddenClms);
-
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = THiddenClms.__proto__ || Object.getPrototypeOf(THiddenClms)).call.apply(_ref, [this].concat(args))), _this), _this.clmShow = function (clmName) {
-      return function (e) {
-        _this.props.onClmShow(clmName);
-      };
-    }, _temp), _possibleConstructorReturn(_this, _ret);
-  }
-
-  _createClass(THiddenClms, [{
-    key: 'render',
-    value: function render() {
-      var headers = this.props.headers;
-
-
-      var hiddenClms = [];
-
-      for (var i = 0; i < headers.length; i++) {
-        if (!headers[i].visible) {
-          var item = _react2.default.createElement(
-            'div',
-            { className: 'tHiddenClms__item', key: headers[i].name },
-            headers[i].label,
-            _react2.default.createElement('i', {
-              className: 'fa fa-eye tHiddenClms__show',
-              onClick: this.clmShow(headers[i].name)
-            })
-          );
-
-          hiddenClms.push(item);
-        }
-      }
-
-      var visibleClass = "";
-      if (hiddenClms.length > 0) {
-        visibleClass = "tHiddenClms_visible";
-      } else {
-        hiddenClms = _react2.default.createElement(
-          'div',
-          { className: 'tHiddenClms__allVisible' },
-          '(All columns is visible)'
-        );
-      }
-
-      return _react2.default.createElement(
-        'div',
-        { className: 'tHiddenClms ' + visibleClass },
-        _react2.default.createElement(
-          'div',
-          { className: 'tHiddenClms__text' },
-          'Hidden columns:'
-        ),
-        _react2.default.createElement(
-          'div',
-          { className: 'tHiddenClms__items' },
-          hiddenClms
-        )
-      );
-    }
-  }]);
-
-  return THiddenClms;
-}(_react.PureComponent);
-
-exports.default = THiddenClms;
-
-
-THiddenClms.propTypes = {
-  headers: _propTypes2.default.array.isRequired,
-  onClmShow: _propTypes2.default.func.isRequired
-};
-
-/***/ }),
-/* 84 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
 
 /***/ })
 /******/ ]);

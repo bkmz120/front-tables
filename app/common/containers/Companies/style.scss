@@ -1,0 +1,21 @@
+.companies {
+
+  &__viewTypes {
+    margin:20px;
+  }
+
+  &__viewType {
+    display:inline-block;
+    vertical-align:top;
+    padding:5px 10px;
+    border:1px solid #ccc;
+    color:#333;
+    cursor:pointer;
+
+    &_active {
+      border-color: #40e840;
+      background-color: #b3f48f;
+      cursor:default;
+    }
+  }
+}

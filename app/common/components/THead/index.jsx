@@ -93,7 +93,6 @@ export default class THead extends PureComponent {
 
 
   render() {
-    console.log('render THead');
     const {headers,filters} = this.props;
     let headerCells = [],
         filterCells = [];

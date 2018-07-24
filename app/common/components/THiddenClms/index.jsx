@@ -35,7 +35,7 @@ export default class THiddenClms extends PureComponent {
       visibleClass = "tHiddenClms_visible";
     }
     else {
-      hiddenClms = <div className="tHiddenClms__allVisible">(All columns is visible)</div>;
+      hiddenClms = <div className="tHiddenClms__allVisible">(All columns are visible)</div>;
     }
 
     return (

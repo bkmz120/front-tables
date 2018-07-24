@@ -26,7 +26,6 @@ export default class TBody extends Component {
   }
 
   render() {
-    console.log("render TBody");
     const {headers,data} = this.props;
 
     let rows = [];
